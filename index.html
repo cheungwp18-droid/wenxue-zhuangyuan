@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中華文學常識狀元紅</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --text: #2d2f38;
+      --muted: #6b7280;
+      --accent: #4f46e5;
+      --accent-2: #7c3aed;
+      --correct: #16a34a;
+      --wrong: #dc2626;
+      --gold: #f59e0b;
+      --shadow: 0 12px 32px rgba(0,0,0,0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background-color: var(--bg);
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cg fill='none' stroke='%23dc2626' stroke-width='1' opacity='0.05'%3E%3Ccircle cx='22' cy='22' r='9'/%3E%3Crect x='18' y='18' width='8' height='8'/%3E%3C/g%3E%3C/svg%3E"),
+        radial-gradient(circle at 20% 20%, #e0e7ff 0%, transparent 28%),
+        radial-gradient(circle at 80% 80%, #fde68a 0%, transparent 26%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: min(900px, 100%);
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow),
+                  inset 0 0 0 3px rgba(220,38,38,0.5),
+                  inset 0 0 0 8px var(--panel),
+                  inset 0 0 0 10px rgba(245,158,11,0.55);
+      padding: 32px;
+      position: relative;
+      overflow: visible;
+    }
+
+    h1, h2, h3 { margin-top: 0; }
+
+    .hidden { display: none !important; }
+
+    /* Start Screen */
+    .start-screen { text-align: center; }
+    .start-screen h1 {
+      font-size: clamp(2rem, 6vw, 3rem);
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .start-screen .subtitle {
+      color: var(--muted);
+      font-size: 1.1rem;
+      margin-bottom: 18px;
+    }
+
+    .rules {
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: .9rem;
+      color: var(--muted);
+      text-align: left;
+      margin-bottom: 22px;
+      line-height: 1.7;
+    }
+    .rules b { color: var(--accent); }
+
+    .levels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .level-card {
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 16px 8px;
+      cursor: pointer;
+      transition: all .2s ease;
+      background: #fff;
+      text-align: center;
+    }
+    .level-card:hover, .level-card.selected {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(79,70,229,0.15);
+    }
+    .level-card .emoji { font-size: 1.8rem; margin-bottom: 6px; }
+    .level-card .name { font-weight: 700; font-size: .95rem; }
+    .level-card .desc { font-size: .75rem; color: var(--muted); margin-top: 4px; }
+    .level-card.locked { opacity: .5; cursor: not-allowed; filter: grayscale(0.7); }
+    .level-card.locked:hover { transform: none; box-shadow: none; border-color: #e5e7eb; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 36px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(79,70,229,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(79,70,229,0.4); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* Leaderboard */
+    .board {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border: 2px solid #fcd34d;
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-top: 22px;
+      text-align: left;
+    }
+    .board h3 { color: #b45309; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .board table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    .board th, .board td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #fde68a; }
+    .board th { color: #92400e; font-size: .8rem; }
+    .board td.rank { font-weight: 800; color: var(--gold); width: 36px; }
+    .board td.sc { font-weight: 700; color: var(--accent); text-align: right; }
+    .board .empty { color: var(--muted); font-size: .85rem; padding: 8px 0; }
+    .board-clear { background: none; border: none; color: #b45309; font-size: .8rem; cursor: pointer; text-decoration: underline; float: right; }
+    .title-legend { font-size: .78rem; color: #92400e; line-height: 1.7; margin: 0 0 10px; }
+    .board td.title-cell { font-weight: 700; color: #b45309; }
+
+    /* Game Screen */
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .badge { padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: .9rem; }
+    .score { font-weight: 800; font-size: 1.1rem; color: var(--gold); }
+    .quit-btn {
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all .15s ease;
+    }
+    .quit-btn:hover { border-color: var(--wrong); color: var(--wrong); }
+    .promo-bar {
+      background: #ecfdf5;
+      border-left: 4px solid var(--correct);
+      color: #065f46;
+      font-size: .85rem;
+      padding: 8px 14px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+    .timer-bar { height: 8px; background: #e5e7eb; border-radius: 999px; margin-bottom: 24px; overflow: hidden; }
+    .timer-fill { height: 100%; background: linear-gradient(90deg, var(--correct), var(--gold)); width: 100%; transition: width 1s linear; }
+    .question-box {
+      background: linear-gradient(135deg, #f8fafc, #eef2ff);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.1rem, 3vw, 1.45rem);
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.6;
+      border: 1px solid #e0e7ff;
+    }
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+    .option {
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 16px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all .15s ease;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .option:hover:not(.disabled) { border-color: var(--accent); background: #f5f7ff; }
+    .option .letter {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #eef2ff;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .option.correct { border-color: var(--correct); background: #dcfce7; }
+    .option.wrong { border-color: var(--wrong); background: #fee2e2; }
+    .option.disabled { pointer-events: none; opacity: .7; }
+
+    .lifelines { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .lifeline {
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 999px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: .9rem;
+      font-weight: 600;
+      transition: all .15s ease;
+    }
+    .lifeline:hover:not(.used):not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .lifeline.used, .lifeline:disabled { opacity: .45; cursor: not-allowed; text-decoration: line-through; }
+    .lifeline .cnt { color: var(--gold); font-weight: 800; }
+
+    .hint-box {
+      background: #fffbeb;
+      border-left: 4px solid var(--gold);
+      padding: 12px 16px;
+      border-radius: 8px;
+      color: #92400e;
+      font-size: .95rem;
+      margin-bottom: 16px;
+    }
+
+    .status-line { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: .9rem; }
+
+    /* Result Screen */
+    .result-screen { text-align: center; }
+    .result-topbar { text-align: left; margin-bottom: 14px; }
+    .result-screen .trophy { font-size: 4rem; margin-bottom: 10px; }
+    .result-screen h2 { font-size: 1.8rem; margin-bottom: 8px; }
+    .result-screen .final-score { font-size: 2.2rem; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+    .result-screen .rank { font-size: 1.2rem; color: var(--gold); font-weight: 700; margin-bottom: 18px; }
+    .unlock-msg { background: #ecfdf5; border: 2px solid #34d399; color: #065f46; border-radius: 12px; padding: 10px 16px; font-weight: 700; margin-bottom: 18px; }
+    .unlock-msg.fail { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+    .name-entry { margin-bottom: 18px; }
+    .name-entry input {
+      padding: 10px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 999px;
+      font-size: 1rem;
+      width: 200px;
+      outline: none;
+    }
+    .name-entry input:focus { border-color: var(--accent); }
+    .name-entry .btn { padding: 10px 22px; font-size: .95rem; margin-left: 8px; }
+    .review-list { text-align: left; max-height: 240px; overflow-y: auto; margin-bottom: 20px; padding-right: 8px; }
+    .review-item { background: #f9fafb; border-radius: 12px; padding: 14px; margin-bottom: 10px; font-size: .95rem; }
+    .review-item .q { font-weight: 700; margin-bottom: 6px; }
+    .review-item .a { color: var(--correct); }
+    .review-item .yours { color: var(--wrong); }
+
+    .sound-toggle {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 999px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: .85rem;
+    }
+
+    /* ===== 中華風裝飾 ===== */
+    .title-wrap { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .seal {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px; height: 56px;
+      background: #c81e1e;
+      color: #fff8e1;
+      border: 2px solid #fde68a;
+      border-radius: 10px;
+      font-family: "Kaiti SC", "STKaiti", "KaiTi", "BiauKai", serif;
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: 2px;
+      line-height: 1.1;
+      writing-mode: vertical-rl;
+      box-shadow: 0 3px 10px rgba(200,30,30,0.35);
+      transform: rotate(-7deg);
+      flex-shrink: 0;
+    }
+    .cloud-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 14px 0 6px;
+    }
+    .cloud-divider .line { height: 2px; width: 90px; background: linear-gradient(90deg, transparent, #c81e1e, #f59e0b); }
+    .cloud-divider .line.right { background: linear-gradient(90deg, #f59e0b, #c81e1e, transparent); }
+    .cloud-divider .dot { font-size: 1.1rem; color: #f59e0b; }
+    .corner { position: absolute; width: 44px; height: 44px; background-repeat: no-repeat; background-size: contain; pointer-events: none; z-index: 1; opacity: .85; }
+    .corner.tl { top: 18px; left: 18px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cg fill='none' stroke='%23c81e1e' stroke-width='2.5'%3E%3Cpath d='M4 26 V4 H26'/%3E%3Cpath d='M12 26 V12 H26'/%3E%3C/g%3E%3C/svg%3E"); }
+    .corner.br { bottom: 18px; right: 18px; transform: rotate(180deg); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cg fill='none' stroke='%23c81e1e' stroke-width='2.5'%3E%3Cpath d='M4 26 V4 H26'/%3E%3Cpath d='M12 26 V12 H26'/%3E%3C/g%3E%3C/svg%3E"); }
+
+    /* 用戶 / 登入面板 */
+    .user-panel {
+      background: #eef2ff;
+      border: 2px solid #c7d2fe;
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      font-size: .92rem;
+      text-align: left;
+    }
+    .user-panel.logged { background: #ecfdf5; border-color: #6ee7b7; }
+    .user-panel .up-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .user-panel .up-status { font-weight: 700; }
+    .user-panel .up-hint { color: var(--muted); font-size: .82rem; margin-top: 6px; }
+    .user-panel input {
+      padding: 9px 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 999px;
+      font-size: .9rem;
+      outline: none;
+      width: 140px;
+    }
+    .user-panel input:focus { border-color: var(--accent); }
+    .btn-small {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 18px;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      transition: transform .15s ease;
+    }
+    .btn-small.ghost { background: #fff; color: var(--muted); border: 2px solid #e5e7eb; }
+    .btn-small:hover { transform: translateY(-1px); }
+    .progress-box {
+      margin-top: 10px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .progress-box h4 { margin: 0 0 8px; font-size: .9rem; color: #065f46; }
+    .progress-box table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .progress-box th, .progress-box td { padding: 4px 6px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    .progress-box th { color: var(--muted); font-weight: 700; font-size: .75rem; }
+    .progress-box td.sc { text-align: right; font-weight: 700; }
+    .progress-box .ok { color: var(--correct); font-weight: 700; }
+    .progress-box .no { color: var(--muted); }
+    .acct-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+    .acct-chip {
+      border: 2px solid #c7d2fe;
+      background: #fff;
+      border-radius: 999px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 700;
+    }
+    .acct-chip:hover, .acct-chip.on { border-color: var(--accent); color: var(--accent); background: #eef2ff; }
+    .login-steps { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: .82rem; line-height: 1.6; }
+    .progress-box .lock { color: #b45309; }
+
+    @media (max-width: 640px) {
+      .options { grid-template-columns: 1fr; }
+      .container { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="sound-toggle" id="soundToggle">🔊 音效</button>
+    <span class="corner tl"></span>
+    <span class="corner br"></span>
+
+    <!-- Start Screen -->
+    <div id="startScreen" class="start-screen">
+      <div class="title-wrap">
+        <h1>🏮 中華文學常識狀元紅</h1>
+        <div class="seal">狀元</div>
+      </div>
+      <div class="cloud-divider">
+        <span class="line"></span><span class="dot">❖</span><span class="line right"></span>
+      </div>
+      <p class="subtitle">由小學必背 348 個文學常識全數改編 · 每關 25 題隨機抽</p>
+
+      <div class="user-panel" id="userPanel"><div id="userPanelBody"></div></div>
+
+      <div class="rules">
+        <b>📋 晉級標準、限制與難度鎖定</b><br>
+        • <b>難度鎖定：</b>高級別需由低挑戰、達標先解鎖；未解鎖級別顯示 🔒，唔可以直接揀。達標後可玩下一級，亦可隨時重玩任何已解鎖（含更高）級別。<br>
+        • 每一關由該級題庫隨機抽 <b>25</b> 題，每題限時 <b>30 秒</b>。<br>
+        • <b>達標標準：</b>本關答對率需 <b>≥ 90%</b>（25 題中答對 ≥ 23 題），<b>且本關分數達到該級門檻</b>（幼稚園 2800／小學 7500／初中 15000／高中 26000／大學 42000／碩士 65000／博士 98000）。兩項都達到先解鎖下一級；不足即結束本場。<br>
+        • <b>失敗限制：</b>全場累計答錯 / 超時 <b>3 次</b> 立即結束（生命 3 條）。<br>
+        • <b>錦囊限制：</b>🧩 50/50 可⽤ 1 次 ｜ 💡 提示可⽤ 2 次 ｜ ⏭️ 跳過可⽤ 1 次（全場計）。<br>
+        • 題目全局去重，唔會重複出現。登入後進度同最佳分數會跟帳戶保存。<br>
+        • <b>退出後點樣再入：</b>返回首頁 → 喺上方帳戶欄揀你嘅名稱（或手動填）→ 輸入註冊時嘅密碼 → 按「登入」。登入後已解鎖難度會亮起，可以直接揀。遊客／只填排行榜呢稱係唔會保存難度嘅。
+      </div>
+
+      <div class="levels-grid" id="levelGrid"></div>
+      <button id="startBtn" class="btn btn-primary" disabled>選擇難度開始 🚀</button>
+
+      <div class="board" id="startBoard">
+        <button class="board-clear" id="clearBoardBtn">清空記錄</button>
+        <h3>🏅 排行榜（本地保存）</h3>
+        <div class="title-legend" id="startTitleLegend"></div>
+        <div id="startBoardBody"></div>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="hidden">
+      <div class="game-header">
+        <button class="quit-btn" id="quitBtn">← 退出</button>
+        <span class="badge" id="levelBadge">小學</span>
+        <span class="score">🏆 全場：<span id="scoreValue">0</span>　本關：<span id="levelScoreValue">0</span></span>
+      </div>
+      <div class="promo-bar" id="promoBar"></div>
+      <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+      <div class="question-box" id="questionText">題目載入中...</div>
+      <div class="hint-box hidden" id="hintBox"></div>
+      <div class="options" id="optionsBox"></div>
+      <div class="lifelines" id="lifelinesBox"></div>
+      <div class="status-line">
+        <span>第 <span id="qIndex">1</span> / 25 題</span>
+        <span>❤️ 生命：<span id="livesValue">3</span></span>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="resultScreen" class="result-screen hidden">
+      <div class="result-topbar">
+        <button class="quit-btn" id="quitResultBtn">🏠 返回首頁</button>
+      </div>
+      <div class="trophy" id="trophyEmoji">🏆</div>
+      <h2 id="resultTitle">挑戰完成</h2>
+      <div class="final-score" id="finalScore">0 分</div>
+      <div class="rank" id="resultRank">文學小神童</div>
+      <div class="unlock-msg hidden" id="unlockMsg"></div>
+
+      <div class="name-entry hidden" id="nameEntry">
+        <input id="nameInput" placeholder="輸入你嘅呢稱" maxlength="12">
+        <button id="saveScoreBtn" class="btn btn-primary">記錄成績</button>
+        <div class="up-hint" id="saveScoreHint" style="margin-top:8px"></div>
+      </div>
+
+      <div class="board" id="resultBoard">
+        <h3>🏅 排行榜（本地保存）</h3>
+        <div class="title-legend" id="resultTitleLegend"></div>
+        <div id="resultBoardBody"></div>
+      </div>
+
+      <div class="review-list hidden" id="reviewList"></div>
+      <button id="restartBtn" class="btn btn-primary">🏠 返回首頁</button>
+    </div>
+  </div>
+
+  <script>
+    /* ============ 音效引擎（Web Audio，自備、無需外部檔） ============ */
+    let audioCtx = null;
+    let soundOn = true;
+    function initAudio() {
+      if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch (e) { soundOn = false; }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    function tone(freq, start, dur, type, vol) {
+      if (!soundOn || !audioCtx) return;
+      const t0 = audioCtx.currentTime + start;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t0); osc.stop(t0 + dur);
+    }
+    function sndCorrect() { tone(523.25, 0, 0.12, 'triangle', 0.25); tone(659.25, 0.10, 0.12, 'triangle', 0.25); tone(783.99, 0.20, 0.16, 'triangle', 0.25); tone(1046.5, 0.32, 0.18, 'sine', 0.16); }
+    function sndWrong()   { tone(440, 0, 0.14, 'triangle', 0.20); tone(349.23, 0.14, 0.24, 'triangle', 0.20); }
+    function sndClick()   { tone(1046.5, 0, 0.05, 'triangle', 0.12); }
+    function sndWin()     { [523.25,587.33,659.25,783.99,880,1046.5].forEach((f,i)=>tone(f, i*0.14, 0.16, 'triangle', 0.25)); tone(1046.5, 0.84, 0.34, 'sine', 0.2); }
+    function sndLose()    { tone(392, 0, 0.18, 'triangle', 0.18); tone(330, 0.18, 0.34, 'triangle', 0.18); }
+    function sndLevel()   { tone(659.25, 0, 0.12, 'triangle', 0.24); tone(987.77, 0.12, 0.22, 'triangle', 0.24); }
+
+    document.getElementById('soundToggle').addEventListener('click', () => {
+      soundOn = !soundOn;
+      document.getElementById('soundToggle').textContent = soundOn ? '🔊 音效' : '🔇 靜音';
+      if (soundOn) initAudio();
+    });
+
+    /* ============ 設定值 ============ */
+    const UNLOCK_NEED = 90;       // 本關答對率需達此百分比才可升級並解鎖下一級
+    const QUESTIONS_PER_LEVEL = 25;
+    const MAX_LIVES = 3;
+    const LIFELINE_LIMITS = { fifty: 1, hint: 2, skip: 1 };
+    const CORRECT_NEED = Math.ceil(QUESTIONS_PER_LEVEL * UNLOCK_NEED / 100); // 23
+    // 每級答對基礎分拉開：越高級單題分越高
+    const LEVEL_BASE = [100, 250, 500, 900, 1500, 2400, 3800];
+    // 晉級分數門檻拉開（23 題全對且有時間獎勵才穩過；越高級越要又快又準）
+    const SCORE_NEED = [2800, 7500, 15000, 26000, 42000, 65000, 98000];
+    const LEVEL_TITLES = [
+      { title: '幼稚園新生', honor: '重新出發', emoji: '🧒' },
+      { title: '小學尖子', honor: '厚積薄發', emoji: '📚' },
+      { title: '初中才俊', honor: '文思初成', emoji: '🎒' },
+      { title: '高中學霸', honor: '文思泉湧', emoji: '📝' },
+      { title: '大學士', honor: '博覽群書', emoji: '🎓' },
+      { title: '文學碩士', honor: '才高八斗', emoji: '📖' },
+      { title: '文學博士', honor: '博學鴻儒', emoji: '👑' }
+    ];
+    function basePoints(levelIndex) {
+      return LEVEL_BASE[levelIndex] || ((levelIndex + 1) * 100);
+    }
+    function scoreNeed(levelIndex) {
+      return SCORE_NEED[levelIndex] || (CORRECT_NEED * basePoints(levelIndex));
+    }
+    function titleIndexFromScore(sc) {
+      let idx = 0;
+      for (let i = 0; i < SCORE_NEED.length; i++) {
+        if (sc >= SCORE_NEED[i]) idx = i;
+      }
+      return idx;
+    }
+    function titleFromScore(sc) {
+      const t = LEVEL_TITLES[titleIndexFromScore(sc)];
+      return t.emoji + ' ' + t.title + ' · ' + t.honor;
+    }
+    function titleLegendHtml() {
+      return '稱號按全場最高分對應各級門檻：' + LEVEL_TITLES.map((t, i) =>
+        t.emoji + t.title + ' ≥' + SCORE_NEED[i]
+      ).join(' ／ ');
+    }
+    function timeBonusOf(left, levelIndex) {
+      return Math.floor(left / 3) * 10 * (levelIndex + 1);
+    }
+
+    const levels = [
+      { id: 'kindergarten', name: '幼稚園', emoji: '🧒', desc: '最基礎常識', color: '#ec4899' },
+      { id: 'primary', name: '小學', emoji: '📚', desc: '基礎文化常識', color: '#3b82f6' },
+      { id: 'middle', name: '初中', emoji: '🎒', desc: '文學之最與詩人', color: '#10b981' },
+      { id: 'high', name: '高中', emoji: '📝', desc: '四大名著與流派', color: '#8b5cf6' },
+      { id: 'university', name: '大學', emoji: '🎓', desc: '專業文學史', color: '#f59e0b' },
+      { id: 'master', name: '碩士', emoji: '🔬', desc: '冷門典故與別稱', color: '#ef4444' },
+      { id: 'phd', name: '博士', emoji: '👑', desc: '書齋對聯與綜合', color: '#6366f1' }
+    ];
+
+    /* ============ 用戶系統（註冊自訂密碼；登入顯示個人進度） ============ */
+    let currentUser = null;     // null = 遊客模式（無名）
+    let sessionUnlocked = 0;    // 遊客當場解鎖，唔持久化
+
+    const USERS_KEY = 'wenxue_users_v2';
+    const SESSION_KEY = 'wenxue_session_user';
+    const LAST_NAME_KEY = 'wenxue_last_login_name';
+
+    function rememberName(name) {
+      if (!name) return;
+      try { localStorage.setItem(LAST_NAME_KEY, name); } catch (e) {}
+    }
+    function lastName() {
+      return localStorage.getItem(LAST_NAME_KEY) || localStorage.getItem(SESSION_KEY) || '';
+    }
+    function listAccountNames() {
+      try { return Object.keys(loadUsers()); } catch (e) { return []; }
+    }
+
+    function emptyProgress() {
+      return {
+        unlocked: 0,
+        bestScores: Array(levels.length).fill(0),
+        passed: Array(levels.length).fill(false)
+      };
+    }
+    function loadUsers() {
+      try { return JSON.parse(localStorage.getItem(USERS_KEY)) || {}; } catch (e) { return {}; }
+    }
+    function saveUsers(users) {
+      try { localStorage.setItem(USERS_KEY, JSON.stringify(users)); } catch (e) {}
+    }
+    function getUserRecord(name) {
+      const u = loadUsers()[name];
+      if (!u) return null;
+      if (!Array.isArray(u.bestScores) || u.bestScores.length !== levels.length) {
+        u.bestScores = Array(levels.length).fill(0).map((_, i) => (u.bestScores && u.bestScores[i]) || 0);
+      }
+      if (!Array.isArray(u.passed) || u.passed.length !== levels.length) {
+        u.passed = Array(levels.length).fill(false).map((_, i) => !!(u.passed && u.passed[i]));
+      }
+      if (typeof u.unlocked !== 'number' || isNaN(u.unlocked)) u.unlocked = 0;
+      u.unlocked = Math.min(Math.max(u.unlocked, 0), levels.length - 1);
+      return u;
+    }
+    function randomSalt() {
+      const a = new Uint8Array(16);
+      (window.crypto || window.msCrypto).getRandomValues(a);
+      return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    async function hashPassword(password, salt) {
+      const enc = new TextEncoder();
+      const data = enc.encode(salt + '\0' + password);
+      if (window.crypto && window.crypto.subtle) {
+        const buf = await window.crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      // 後備：無 SubtleCrypto 時用簡單散列（仍加鹽）
+      let h = 2166136261;
+      const s = salt + '\0' + password;
+      for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return (h >>> 0).toString(16);
+    }
+    function readAuthFields() {
+      const name = (document.getElementById('nameField').value || '').trim();
+      const password = document.getElementById('pwField').value || '';
+      return { name, password };
+    }
+    async function registerUser() {
+      const { name, password } = readAuthFields();
+      if (name.length < 2) { alert('名稱至少 2 個字'); return; }
+      if (password.length < 4) { alert('請自訂密碼，至少 4 個字'); return; }
+      const users = loadUsers();
+      if (users[name]) { alert('名稱「' + name + '」已經註冊，請登入或換一個名。'); return; }
+      const salt = randomSalt();
+      const hash = await hashPassword(password, salt);
+      const rec = { salt, hash, ...emptyProgress() };
+      const oldUnlock = parseInt(localStorage.getItem('wenxue_unlock_' + name), 10);
+      if (!isNaN(oldUnlock) && oldUnlock > 0) rec.unlocked = Math.min(oldUnlock, levels.length - 1);
+      users[name] = rec;
+      saveUsers(users);
+      currentUser = name;
+      rememberName(name);
+      try { localStorage.setItem(SESSION_KEY, name); } catch (e) {}
+      sndClick();
+      renderUserPanel();
+      renderLevelCards();
+    }
+    async function loginUser() {
+      const { name, password } = readAuthFields();
+      if (!name) { alert('請輸入名稱'); return; }
+      if (!password) { alert('請輸入密碼'); return; }
+      const rec = getUserRecord(name);
+      if (!rec) { alert('名稱「' + name + '」尚未註冊，請先按「註冊」。排行榜呢稱唔等於帳戶。'); return; }
+      const hash = await hashPassword(password, rec.salt);
+      if (hash !== rec.hash) { alert('密碼錯誤。請用註冊時自己定嘅密碼。'); return; }
+      currentUser = name;
+      rememberName(name);
+      try { localStorage.setItem(SESSION_KEY, name); } catch (e) {}
+      sndClick();
+      renderUserPanel();
+      renderLevelCards();
+    }
+    function logoutUser() {
+      if (currentUser) rememberName(currentUser);
+      currentUser = null;
+      sessionUnlocked = 0;
+      try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+      sndClick();
+      renderUserPanel();
+      renderLevelCards();
+      const nf = document.getElementById('nameField');
+      const pw = document.getElementById('pwField');
+      if (nf) nf.focus();
+      if (pw) pw.focus();
+    }
+    function restoreSession() {
+      const name = localStorage.getItem(SESSION_KEY) || '';
+      if (name && getUserRecord(name)) {
+        currentUser = name;
+        rememberName(name);
+      }
+    }
+    function renderProgressBox() {
+      const rec = getUserRecord(currentUser);
+      if (!rec) return '';
+      const unlocked = rec.unlocked;
+      let rows = '';
+      levels.forEach((lv, i) => {
+        const locked = i > unlocked;
+        const passed = !!rec.passed[i];
+        const best = rec.bestScores[i] || 0;
+        const need = scoreNeed(i);
+        const status = locked ? '<span class="lock">🔒 未解鎖</span>'
+          : (passed ? '<span class="ok">✓ 已達標</span>' : '<span class="no">可挑戰</span>');
+        rows += `<tr><td>${lv.emoji} ${escapeHtml(lv.name)}</td><td>${status}</td><td class="sc">${best}</td><td class="sc">${need}</td></tr>`;
+      });
+      return `<div class="progress-box">
+        <h4>📊 個人進度（已解鎖至：${escapeHtml(levels[unlocked].name)}）</h4>
+        <table>
+          <thead><tr><th>級別</th><th>狀態</th><th style="text-align:right">最佳本關分</th><th style="text-align:right">達標分數</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    }
+    function renderUserPanel() {
+      const panel = document.getElementById('userPanel');
+      const body = document.getElementById('userPanelBody');
+      if (currentUser) {
+        panel.classList.add('logged');
+        body.innerHTML = `
+          <div class="up-row">
+            <span class="up-status">👤 已登入：<b>${escapeHtml(currentUser)}</b></span>
+            <button class="btn-small ghost" id="logoutBtn">切換帳號</button>
+          </div>
+          <div class="up-hint">下面亮起嘅難度都可以直接揀。退出遊戲唔會登出；下次打開同一檔案都會自動保持登入。要換人先按「切換帳號」。</div>
+          ${renderProgressBox()}`;
+        document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+      } else {
+        panel.classList.remove('logged');
+        const names = listAccountNames();
+        const remembered = lastName();
+        const chips = names.length
+          ? `<div class="up-hint" style="margin-top:8px">本機已有帳戶，撳個名再輸入密碼登入：</div>
+             <div class="acct-list">${names.map(n =>
+               `<button type="button" class="acct-chip${n === remembered ? ' on' : ''}" data-name="${escapeHtml(n)}">👤 ${escapeHtml(n)}</button>`
+             ).join('')}</div>`
+          : `<div class="up-hint" style="margin-top:8px">本機仲未有帳戶。請先「註冊」（自己定密碼），之後先可以保存可揀難度。</div>`;
+        body.innerHTML = `
+          <div class="up-row"><span class="up-status">👤 未登入（遊客唔保存可揀難度）</span></div>
+          ${chips}
+          <div class="up-row" style="margin-top:8px">
+            <input id="nameField" placeholder="名稱" maxlength="12" autocomplete="username">
+            <input id="pwField" type="password" placeholder="密碼" maxlength="32" autocomplete="current-password">
+            <button class="btn-small" id="loginBtn">登入</button>
+            <button class="btn-small ghost" id="registerBtn">註冊</button>
+          </div>
+          <ol class="login-steps">
+            <li>揀上面嘅帳戶，或自己填名稱</li>
+            <li>輸入註冊時嘅密碼</li>
+            <li>按「登入」→ 個人進度同已解鎖難度會即時出現，就可以揀關</li>
+          </ol>`;
+        const nameField = document.getElementById('nameField');
+        const pw = document.getElementById('pwField');
+        if (remembered) nameField.value = remembered;
+        document.querySelectorAll('.acct-chip').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.acct-chip').forEach(c => c.classList.remove('on'));
+            btn.classList.add('on');
+            nameField.value = btn.getAttribute('data-name') || '';
+            pw.focus();
+          });
+        });
+        document.getElementById('loginBtn').addEventListener('click', () => { loginUser(); });
+        document.getElementById('registerBtn').addEventListener('click', () => { registerUser(); });
+        pw.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginUser(); });
+        nameField.addEventListener('keydown', (e) => { if (e.key === 'Enter') pw.focus(); });
+      }
+    }
+
+    /* ============ 難度解鎖（按帳戶保存） ============ */
+    function getUnlocked() {
+      if (currentUser) {
+        const rec = getUserRecord(currentUser);
+        return rec ? rec.unlocked : 0;
+      }
+      return sessionUnlocked;  // 遊客：當場有效，結束後清零
+    }
+    function unlockLevel(idx) {
+      if (idx < 0 || idx >= levels.length) return false;
+      if (idx > getUnlocked()) {
+        if (currentUser) {
+          const users = loadUsers();
+          if (users[currentUser]) {
+            users[currentUser].unlocked = idx;
+            saveUsers(users);
+          }
+        } else {
+          sessionUnlocked = idx;
+        }
+        return true;
+      }
+      return false;
+    }
+    function persistAttempt(levelIndex, points, passed) {
+      if (currentUser) {
+        const users = loadUsers();
+        const rec = users[currentUser];
+        if (!rec) return;
+        if (!Array.isArray(rec.bestScores)) rec.bestScores = Array(levels.length).fill(0);
+        if (!Array.isArray(rec.passed)) rec.passed = Array(levels.length).fill(false);
+        if (points > (rec.bestScores[levelIndex] || 0)) rec.bestScores[levelIndex] = points;
+        if (passed) rec.passed[levelIndex] = true;
+        if (passed && levelIndex < levels.length - 1 && rec.unlocked < levelIndex + 1) {
+          rec.unlocked = levelIndex + 1;
+        }
+        saveUsers(users);
+      } else if (passed && levelIndex < levels.length - 1 && sessionUnlocked < levelIndex + 1) {
+        sessionUnlocked = levelIndex + 1;
+      }
+    }
+    function levelPassedThisRound() {
+      return levelScore >= UNLOCK_NEED && levelPoints >= scoreNeed(currentLevel);
+    }
+
+    /* ============ 題庫（覆蓋小學必背 348 個文學常識） ============ */
+    const questionBank = {
+      kindergarten: [
+        { q: '「三教」通常指儒教、道教同？', options: ['佛教','基督教','伊斯蘭教','天主教'], a: 0, hint: '儒、道、佛' },
+        { q: '「五行」係金、木、水、火同？', options: ['土','風','雷','石'], a: 0, hint: '金木水火土' },
+        { q: '「五金」包括金、銀、銅、鐵同？', options: ['錫','鉛','鋅','鋁'], a: 0, hint: '金銀銅鐵錫' },
+        { q: '「歲寒三友」指邊三種植物？', options: ['松竹梅','梅蘭竹','桃李杏','荷蓮菊'], a: 0, hint: '松、竹、梅' },
+        { q: '「花中四君子」係邊四種花？', options: ['梅蘭竹菊','松竹梅菊','桃李杏梨','荷蓮桂菊'], a: 0, hint: '梅、蘭、竹、菊' },
+        { q: '「文人四友」係琴、棋、書同？', options: ['畫','印','劍','茶'], a: 0, hint: '琴棋書畫' },
+        { q: '「文房四寶」係咩？', options: ['筆墨紙硯','琴棋書畫','詩詞歌賦','刀槍劍戟'], a: 0, hint: '筆墨紙硯' },
+        { q: '「花中四君子」入面代表冬天開花嘅係？', options: ['梅','蘭','竹','菊'], a: 0, hint: '梅花' },
+        { q: '「花中四君子」入面象徵空谷幽香嘅係？', options: ['蘭','梅','竹','菊'], a: 0, hint: '蘭花' },
+        { q: '「歲寒三友」入面，唔屬於「花中四君子」嘅係？', options: ['松','梅','竹','以上皆是'], a: 0, hint: '四君子係梅蘭竹菊' },
+        { q: '中國「四大民間傳說」包括《牛郎織女》、《梁祝》、《白蛇傳》同？', options: ['《孟姜女哭長城》','《西遊記》','《紅樓夢》','《三國演義》'], a: 0, hint: '孟姜女' },
+        { q: '「十二生肖」中排第一嘅係？', options: ['鼠','牛','虎','龍'], a: 0, hint: '子鼠' },
+        { q: '「天干」共有幾多個？', options: ['10','12','8','24'], a: 0, hint: '甲至癸' },
+        { q: '「地支」共有幾多個？', options: ['12','10','24','60'], a: 0, hint: '子至亥' },
+        { q: '「五穀」中嘅「菽」指咩？', options: ['豆類','粟米','稻','麥'], a: 0, hint: '菽即豆' },
+        { q: '傳統「五穀」一般包括稻、黍、稷、麥同？', options: ['豆','麻','薯','粟'], a: 0, hint: '稻黍稷麥豆' },
+        { q: '「文房四寶」入面嘅「硯」主要用嚟？', options: ['磨墨','寫字','畫畫','裝飾'], a: 0, hint: '硯台磨墨' },
+        { q: '「五行」相生：金生水、水生？', options: ['木','火','土','金'], a: 0, hint: '水生木' },
+        { q: '八卦入面代表「天」嘅係？', options: ['乾','坤','震','巽'], a: 0, hint: '乾為天' },
+        { q: '八卦入面代表「地」嘅係？', options: ['坤','乾','艮','兌'], a: 0, hint: '坤為地' },
+        { q: '八卦入面代表「雷」嘅係？', options: ['震','巽','坎','離'], a: 0, hint: '震為雷' },
+        { q: '八卦入面代表「風」嘅係？', options: ['巽','震','坎','兌'], a: 0, hint: '巽為風' },
+        { q: '中國「四大發明」包括造紙術、印刷術、火藥同？', options: ['指南針','地動儀','紡車','渾天儀'], a: 0, hint: '指南針' },
+        { q: '「三皇」通常包括伏羲、神農同？', options: ['黃帝','堯','舜','禹'], a: 0, hint: '伏羲神農黃帝' },
+        { q: '「五帝」通常包括少昊、顓頊、帝嚳、堯同？', options: ['舜','禹','湯','啟'], a: 0, hint: '堯舜' },
+        { q: '古人講「而立」係指幾多歲？', options: ['30歲','20歲','40歲','50歲'], a: 0, hint: '三十而立' },
+        { q: '古人講「不惑」係指幾多歲？', options: ['40歲','30歲','50歲','60歲'], a: 0, hint: '四十不惑' },
+        { q: '古人講「知天命」係指幾多歲？', options: ['50歲','40歲','60歲','70歲'], a: 0, hint: '五十知天命' },
+        { q: '「花甲」係指幾多歲？', options: ['60歲','50歲','70歲','80歲'], a: 0, hint: '六十花甲' },
+        { q: '「古稀」係指幾多歲？', options: ['70歲','60歲','80歲','90歲'], a: 0, hint: '七十古來稀' },
+        { q: '「弱冠」係指男子幾多歲？', options: ['20歲','16歲','18歲','15歲'], a: 0, hint: '二十弱冠' },
+        { q: '「耄耋」大約指幾多歲？', options: ['八九十歲','六十歲','七十歲','四十歲'], a: 0, hint: '八十曰耄，九十曰耋' },
+        { q: '「期頤」係指幾多歲？', options: ['100歲','80歲','90歲','70歲'], a: 0, hint: '百年曰期頤' },
+        { q: '「豆蔻年華」通常指女子大約幾多歲？', options: ['十三四歲','二十歲','十八歲','三十歲'], a: 0, hint: '十三四至十五六' },
+        { q: '陰曆正月十五嘅節日係？', options: ['元宵節','中秋節','端午節','清明節'], a: 0, hint: '上元／元宵' },
+        { q: '端午節係農曆邊一日？', options: ['五月初五','八月十五','正月十五','九月初九'], a: 0, hint: '端午' },
+        { q: '中秋節係農曆邊一日？', options: ['八月十五','五月初五','正月十五','七月初七'], a: 0, hint: '中秋' },
+        { q: '古代以山北水南為？', options: ['陰','陽','東','西'], a: 0, hint: '山北水南為陰' },
+        { q: '古代以山南水北為？', options: ['陽','陰','左','右'], a: 0, hint: '山南水北為陽' },
+        { q: '古代地理方位：東為？', options: ['左','右','上','下'], a: 0, hint: '東為左，西為右' },
+        { q: '古人稱「河」通常指？', options: ['黃河','長江','淮河','珠江'], a: 0, hint: '河即黃河' },
+        { q: '古人稱「江」通常指？', options: ['長江','黃河','珠江','黑龍江'], a: 0, hint: '江即長江' },
+        { q: '「六合」指天、地同？', options: ['東、南、西、北','金、木、水、火','春、夏、秋、冬','士、農、工、商'], a: 0, hint: '天地四方' },
+        { q: '北斗七星排列成邊種形狀？', options: ['斗形／勺形','圓形','十字形','三角形'], a: 0, hint: '勺形' },
+        { q: '傳統節日「寒食」後來常同邊個節一齊過？', options: ['清明','端午','中秋','重陽'], a: 0, hint: '寒食近清明' },
+        { q: '重陽節係農曆邊一日？', options: ['九月初九','七月初七','五月初五','正月十五'], a: 0, hint: '九九重陽' },
+      ],
+      primary: [
+        { q: '「四書」包括《論語》、《大學》、《中庸》同？', options: ['《孟子》','《莊子》','《老子》','《荀子》'], a: 0, hint: '論孟學庸' },
+        { q: '「五經」包括《詩經》、《尚書》、《禮記》、《易經》同？', options: ['《春秋》','《戰國策》','《史記》','《漢書》'], a: 0, hint: '詩書禮易春秋' },
+        { q: '「四書五經」中，「五經」不包括邊本？', options: ['《論語》','《詩經》','《尚書》','《春秋》'], a: 0, hint: '論語屬四書' },
+        { q: '《詩經》分「風、雅、頌」，其中「風」指？', options: ['各地民歌','宮廷樂舞','宗廟頌歌','帝王詔令'], a: 0, hint: '國風' },
+        { q: '《詩經》「六義」中，表現手法係？', options: ['賦比興','風雅頌','起承轉合','平上去入'], a: 0, hint: '賦、比、興' },
+        { q: '儒家「六藝」包括禮、樂、射、御、書同？', options: ['數','畫','琴','騎'], a: 0, hint: '禮樂射御書數' },
+        { q: '漢字「六書」中，「日」「月」屬於邊種造字法？', options: ['象形','指事','會意','形聲'], a: 0, hint: '畫出形狀' },
+        { q: '漢字六書包括象形、指事、形聲、會意、轉注同？', options: ['假借','形訓','聲訓','義訓'], a: 0, hint: '假借' },
+        { q: '「楚辭」嘅代表作家係？', options: ['屈原','司馬遷','曹操','陶淵明'], a: 0, hint: '屈原' },
+        { q: '司馬遷《史記》開創咗邊種史書體裁？', options: ['紀傳體','編年體','國別體','斷代體'], a: 0, hint: '紀傳體通史' },
+        { q: '被後世尊為「書聖」嘅係？', options: ['王羲之','顏真卿','柳公權','張旭'], a: 0, hint: '蘭亭集序' },
+        { q: '「顏筋柳骨」中嘅「柳」指？', options: ['柳公權','柳宗元','柳永','柳如是'], a: 0, hint: '楷書大家' },
+        { q: '王維嘅詩被稱為？', options: ['詩中有畫','詩史','詩鬼','詩奴'], a: 0, hint: '詩中有畫' },
+        { q: '白居易嘅號係？', options: ['香山居士','少陵野老','青蓮居士','六一居士'], a: 0, hint: '香山' },
+        { q: '杜甫嘅詩被後人稱為？', options: ['詩史','詩經','詩話','詩餘'], a: 0, hint: '詩史' },
+        { q: '《木蘭詩》同《孔雀東南飛》合稱？', options: ['樂府雙璧','唐詩雙絕','辭賦雙星','傳奇雙傑'], a: 0, hint: '樂府雙璧' },
+        { q: '《說文解字》嘅作者係？', options: ['許慎','倉頡','蔡倫','畢昇'], a: 0, hint: '許慎' },
+        { q: '《資治通鑑》屬於四部分類中嘅？', options: ['史部','經部','子部','集部'], a: 0, hint: '史書' },
+        { q: '「五嶽」之首（東嶽）係？', options: ['泰山','華山','衡山','恆山'], a: 0, hint: '東嶽泰山' },
+        { q: '西嶽係邊座山？', options: ['華山','泰山','衡山','嵩山'], a: 0, hint: '華山' },
+        { q: '南嶽係邊座山？', options: ['衡山','泰山','華山','恆山'], a: 0, hint: '衡山' },
+        { q: '北嶽係邊座山？', options: ['恆山','嵩山','泰山','衡山'], a: 0, hint: '恆山' },
+        { q: '中嶽係邊座山？', options: ['嵩山','泰山','衡山','華山'], a: 0, hint: '嵩山' },
+        { q: '「宣紙」主要產自邊個省？', options: ['安徽','浙江','江蘇','江西'], a: 0, hint: '宣城' },
+        { q: '四大文化遺產中，喺敦煌嘅係？', options: ['敦煌經卷','殷墟甲骨','明清檔案','居延漢簡'], a: 0, hint: '莫高窟' },
+        { q: '殷墟甲骨主要出土於？', options: ['河南安陽','甘肅敦煌','陝西西安','山東曲阜'], a: 0, hint: '殷墟' },
+        { q: '佛教四大名山包括五台、九華、峨眉同？', options: ['普陀山','泰山','黃山','廬山'], a: 0, hint: '普陀山' },
+        { q: '中國「三山」通常指黃山、廬山同？', options: ['雁蕩山','泰山','峨眉山','武夷山'], a: 0, hint: '雁蕩山' },
+        { q: '「五湖」不包括邊個？', options: ['青海湖','鄱陽湖','洞庭湖','太湖'], a: 0, hint: '五湖無青海湖' },
+        { q: '中國「四海」指渤海、黃海、東海同？', options: ['南海','北海','洱海','青海'], a: 0, hint: '南海' },
+        { q: '中國四大名繡包括蘇繡、湘繡、粵繡同？', options: ['蜀繡','京繡','汴繡','顧繡'], a: 0, hint: '蜀繡' },
+        { q: '中國四大名園包括頤和園、避暑山莊、拙政園同？', options: ['留園','圓明園','豫園','個園'], a: 0, hint: '留園' },
+        { q: '中國四大名樓包括岳陽樓、黃鶴樓、滕王閣同？', options: ['大觀樓','鸛雀樓','蓬萊閣','鎮海樓'], a: 0, hint: '昆明大觀樓' },
+        { q: '中國四大石窟包括莫高窟、雲岡、龍門同？', options: ['麥積山石窟','榆林窟','響堂山石窟','天龍山石窟'], a: 0, hint: '麥積山' },
+        { q: '中國四大書院包括白鹿洞、岳麓、嵩陽同？', options: ['應天書院','東林書院','石鼓書院','鵝湖書院'], a: 0, hint: '應天書院' },
+        { q: '景德鎮、佛山鎮、漢口鎮同朱仙鎮合稱？', options: ['四大古鎮','江南四鎮','天下四關','四大名埠'], a: 0, hint: '四大古鎮' },
+        { q: '京劇「四大名旦」包括梅蘭芳、程硯秋、尚小雲同？', options: ['荀慧生','譚鑫培','馬連良','周信芳'], a: 0, hint: '荀慧生' },
+        { q: '中國八大菜系包括魯川粵蘇浙閩湘同？', options: ['徽菜','京菜','滬菜','東北菜'], a: 0, hint: '徽菜' },
+        { q: '西湖一帶最出名嘅茶係？', options: ['龍井','碧螺春','鐵觀音','普洱'], a: 0, hint: '西湖龍井' },
+        { q: '洛陽牡丹、杭州菊花、昆明山茶同漳州水仙合稱？', options: ['中國四大名花','花中四君子','歲寒三友','園林四雅'], a: 0, hint: '四大名花' },
+        { q: '蘇繡主要產地係？', options: ['江蘇','湖南','廣東','四川'], a: 0, hint: '蘇州' },
+        { q: '中國四大名瓷窯包括磁州窯、龍泉窯、景德鎮窯同？', options: ['德化窯','鈞窯','汝窯','定窯'], a: 0, hint: '福建德化' },
+        { q: '中國四大名扇包括檀香扇、火畫扇、竹絲扇同？', options: ['綾絹扇','摺扇','蒲扇','羽毛扇'], a: 0, hint: '浙江綾絹扇' },
+        { q: '昆明因為四季如春又叫？', options: ['春城','花城','山城','羊城'], a: 0, hint: '春城' },
+        { q: '廣州又稱羊城，重有個別稱係？', options: ['花城','春城','山城','江城'], a: 0, hint: '花城' },
+        { q: '重慶因為依山而建，常被稱為？', options: ['山城','春城','花城','冰城'], a: 0, hint: '山城／霧都' },
+        { q: '拉薩因為日照充足，有個別稱係？', options: ['日光城','春城','江城','泉城'], a: 0, hint: '日光城' },
+      ],
+      middle: [
+        { q: '中國最早嘅詩歌總集係？', options: ['《詩經》','《楚辭》','《樂府詩集》','《古詩十九首》'], a: 0, hint: '詩三百' },
+        { q: '《詩經》大約有幾多首詩？', options: ['305','100','500','1000'], a: 0, hint: '三百零五' },
+        { q: '中國最早嘅愛國詩人係？', options: ['屈原','杜甫','陸游','辛棄疾'], a: 0, hint: '屈原' },
+        { q: '中國最早嘅田園詩人係？', options: ['陶淵明','謝靈運','王維','孟浩然'], a: 0, hint: '陶淵明' },
+        { q: '被稱為「詩仙」嘅係？', options: ['李白','杜甫','李賀','王維'], a: 0, hint: '李白' },
+        { q: '被稱為「詩聖」嘅係？', options: ['杜甫','李白','白居易','李商隱'], a: 0, hint: '杜甫' },
+        { q: '被稱為「詩佛」嘅係？', options: ['王維','李白','孟浩然','賈島'], a: 0, hint: '王維' },
+        { q: '被稱為「詩豪」嘅係？', options: ['劉禹錫','劉長卿','劉克莊','劉因'], a: 0, hint: '劉禹錫' },
+        { q: '被稱為「詩鬼」嘅係？', options: ['李賀','李白','李商隱','李嶠'], a: 0, hint: '李賀' },
+        { q: '被稱為「詩魔」嘅係？', options: ['白居易','李白','賈島','孟郊'], a: 0, hint: '白居易' },
+        { q: '被稱為「詩傑」嘅係？', options: ['王勃','王維','王之渙','王昌齡'], a: 0, hint: '王勃' },
+        { q: '被稱為「詩狂」嘅係？', options: ['賀知章','李白','杜甫','劉伶'], a: 0, hint: '賀知章' },
+        { q: '李白嘅號係？', options: ['青蓮居士','少陵野老','香山居士','東坡居士'], a: 0, hint: '青蓮' },
+        { q: '杜甫嘅號係？', options: ['少陵野老','青蓮居士','易安居士','六一居士'], a: 0, hint: '少陵' },
+        { q: '蘇軾嘅號係？', options: ['東坡居士','稼軒','易安','半山'], a: 0, hint: '東坡' },
+        { q: '辛棄疾嘅號係？', options: ['稼軒','東坡','放翁','易安'], a: 0, hint: '稼軒' },
+        { q: '李清照嘅號係？', options: ['易安居士','幼安居士','青蓮居士','六一居士'], a: 0, hint: '易安' },
+        { q: '陸游嘅號係？', options: ['放翁','稼軒','東坡','易安'], a: 0, hint: '陸放翁' },
+        { q: '「李杜」指李白同？', options: ['杜甫','杜牧','李商隱','杜荀鶴'], a: 0, hint: '杜甫' },
+        { q: '「小李杜」指李商隱同？', options: ['杜牧','杜荀鶴','杜甫','杜審言'], a: 0, hint: '杜牧' },
+        { q: '「唐宋古文運動」倡導者係韓愈同？', options: ['柳宗元','歐陽修','蘇軾','王安石'], a: 0, hint: '韓柳' },
+        { q: '「一門父子三詞客」指蘇洵、蘇軾同？', options: ['蘇轍','蘇武','蘇味道','蘇舜欽'], a: 0, hint: '三蘇' },
+        { q: '「初唐四傑」包括王勃、楊炯、盧照鄰同？', options: ['駱賓王','王維','李白','杜甫'], a: 0, hint: '駱賓王' },
+        { q: '唐詩「邊塞詩派」代表唔包括邊位？', options: ['孟浩然','高適','岑參','王昌齡'], a: 0, hint: '孟浩然屬田園' },
+        { q: '古代最傑出嘅女詞人一般認為係？', options: ['李清照','蔡文姬','薛濤','朱淑真'], a: 0, hint: '李清照' },
+        { q: '古代最著名嘅愛國詞人一般認為係？', options: ['辛棄疾','蘇軾','柳永','晏殊'], a: 0, hint: '辛棄疾' },
+        { q: '古代寫詩最多嘅愛國詩人一般認為係？', options: ['陸游','杜甫','屈原','辛棄疾'], a: 0, hint: '陸游' },
+        { q: '白居易倡導嘅詩歌運動係？', options: ['新樂府運動','古文運動','西崑體','花間派'], a: 0, hint: '新樂府' },
+        { q: '《木蘭詩》產生於邊個時期？', options: ['北朝','盛唐','西漢','南宋'], a: 0, hint: '北朝樂府' },
+        { q: '「三曹」指曹操、曹丕同？', options: ['曹植','曹彰','曹沖','曹爽'], a: 0, hint: '曹植' },
+        { q: '陶淵明嘅號係？', options: ['五柳先生','東坡居士','青蓮居士','易安居士'], a: 0, hint: '五柳' },
+        { q: '「唐宋八大家」中，唐朝有幾位？', options: ['2','3','4','5'], a: 0, hint: '韓柳' },
+        { q: '「唐宋八大家」唔包括邊位？', options: ['李白','韓愈','歐陽修','曾鞏'], a: 0, hint: '李白非八大家' },
+        { q: '馬致遠《天淨沙·秋思》被譽為？', options: ['秋思之祖','元曲之冠','小令極品','詞壇絕唱'], a: 0, hint: '秋思之祖' },
+        { q: '「先天下之憂而憂」出自邊位？', options: ['范仲淹','歐陽修','蘇軾','王安石'], a: 0, hint: '岳陽樓記' },
+        { q: '「醉翁之意不在酒」出自？', options: ['《醉翁亭記》','《秋聲賦》','《朋黨論》','《岳陽樓記》'], a: 0, hint: '歐陽修' },
+        { q: '「落霞與孤鶩齊飛」出自？', options: ['《滕王閣序》','《岳陽樓記》','《赤壁賦》','《蘭亭集序》'], a: 0, hint: '王勃' },
+        { q: '「海內存知己，天涯若比鄰」作者係？', options: ['王勃','李白','杜甫','王維'], a: 0, hint: '王勃' },
+        { q: '「但願人長久，千里共嬋娟」出自？', options: ['《水調歌頭》','《念奴嬌》','《江城子》','《卜算子》'], a: 0, hint: '蘇軾中秋詞' },
+        { q: '「大江東去，浪淘盡」出自？', options: ['《念奴嬌·赤壁懷古》','《水調歌頭》','《江城子》','《定風波》'], a: 0, hint: '赤壁懷古' },
+        { q: '「尋尋覓覓，冷冷清清」出自？', options: ['《聲聲慢》','《如夢令》','《醉花陰》','《一剪梅》'], a: 0, hint: '李清照' },
+        { q: '「春風又綠江南岸」作者係？', options: ['王安石','蘇軾','歐陽修','曾鞏'], a: 0, hint: '泊船瓜洲' },
+        { q: '「會當凌絕頂，一覽眾山小」出自？', options: ['《望嶽》','《登高》','《春望》','《茅屋為秋風所破歌》'], a: 0, hint: '杜甫望嶽' },
+        { q: '「安得廣廈千萬間」出自？', options: ['《茅屋為秋風所破歌》','《登高》','《石壕吏》','《春望》'], a: 0, hint: '茅屋' },
+        { q: '「同是天涯淪落人」出自？', options: ['《琵琶行》','《長恨歌》','《賣炭翁》','《觀刈麥》'], a: 0, hint: '白居易' },
+        { q: '「天生我材必有用」出自？', options: ['《將進酒》','《行路難》','《蜀道難》','《靜夜思》'], a: 0, hint: '李白' },
+        { q: '「忽如一夜春風來」出自？', options: ['岑參《白雪歌送武判官歸京》','高適《燕歌行》','王之渙《涼州詞》','王昌齡《出塞》'], a: 0, hint: '岑參' },
+        { q: '「出師未捷身先死」讚嘅係？', options: ['諸葛亮','劉備','岳飛','文天祥'], a: 0, hint: '武侯' },
+        { q: '「世上瘡痍，詩中聖哲」讚嘅係？', options: ['杜甫','李白','白居易','屈原'], a: 0, hint: '詩聖' },
+        { q: '「人生自古誰無死，留取丹心照汗青」作者係？', options: ['文天祥','岳飛','于謙','史可法'], a: 0, hint: '過零丁洋' },
+      ],
+      high: [
+        { q: '中國最偉大嘅現實主義長篇小說一般認為係？', options: ['《紅樓夢》','《儒林外史》','《水滸傳》','《金瓶梅》'], a: 0, hint: '曹雪芹' },
+        { q: '古代最傑出嘅長篇諷刺小說一般認為係？', options: ['《儒林外史》','《官場現形記》','《老殘遊記》','《孽海花》'], a: 0, hint: '吳敬梓' },
+        { q: '《三國演義》作者係？', options: ['羅貫中','施耐庵','吳承恩','曹雪芹'], a: 0, hint: '羅貫中' },
+        { q: '《水滸傳》作者一般認為係？', options: ['施耐庵','羅貫中','吳承恩','馮夢龍'], a: 0, hint: '施耐庵' },
+        { q: '《西遊記》作者一般認為係？', options: ['吳承恩','羅貫中','施耐庵','曹雪芹'], a: 0, hint: '吳承恩' },
+        { q: '曹雪芹生活喺邊個朝代？', options: ['清代','明代','元代','宋代'], a: 0, hint: '清朝' },
+        { q: '《紅樓夢》又稱？', options: ['《石頭記》','《金瓶梅》','《琵琶記》','《長生殿》'], a: 0, hint: '石頭記' },
+        { q: '「字字看來皆是血，十年辛苦不尋常」評價邊部書？', options: ['《紅樓夢》','《三國演義》','《水滸傳》','《西遊記》'], a: 0, hint: '紅樓' },
+        { q: '「龍爭虎鬥」可概括邊部書？', options: ['《三國演義》','《水滸傳》','《西遊記》','《封神演義》'], a: 0, hint: '三國' },
+        { q: '金陵十二釵正冊唔包括？', options: ['香菱','林黛玉','薛寶釵','史湘雲'], a: 0, hint: '香菱多入副冊' },
+        { q: '《紅樓夢》「葬花吟」係邊個所作？', options: ['林黛玉','薛寶釵','王熙鳳','史湘雲'], a: 0, hint: '黛玉' },
+        { q: '「草船借箭」嘅主角係？', options: ['諸葛亮','周瑜','魯肅','劉備'], a: 0, hint: '孔明' },
+        { q: '桃園三結義嘅三兄弟係劉備、關羽同？', options: ['張飛','趙雲','黃忠','馬超'], a: 0, hint: '張飛' },
+        { q: '過五關斬六將、千里走單騎嘅英雄係？', options: ['關羽','張飛','趙雲','馬超'], a: 0, hint: '關公' },
+        { q: '《水滸傳》綽號「及時雨」嘅係？', options: ['宋江','林沖','武松','李逵'], a: 0, hint: '宋江' },
+        { q: '《水滸傳》綽號「豹子頭」嘅係？', options: ['林沖','武松','魯智深','楊志'], a: 0, hint: '林沖' },
+        { q: '《西遊記》最具反抗精神嘅情節常被認為係？', options: ['大鬧天宮','三打白骨精','真假美猴王','取經成佛'], a: 0, hint: '大鬧天宮' },
+        { q: '教孫悟空七十二變嘅師父係？', options: ['菩提祖師','唐僧','玉皇大帝','太上老君'], a: 0, hint: '菩提祖師' },
+        { q: '四大古典戲曲包括《桃花扇》、《西廂記》、《牡丹亭》同？', options: ['《長生殿》','《竇娥冤》','《趙氏孤兒》','《琵琶記》'], a: 0, hint: '洪昇' },
+        { q: '《牡丹亭》作者湯顯祖係邊朝人？', options: ['明代','唐代','宋代','清代'], a: 0, hint: '明朝' },
+        { q: '「臨川四夢」作者係？', options: ['湯顯祖','關漢卿','王實甫','孔尚任'], a: 0, hint: '湯顯祖' },
+        { q: '《桃花扇》作者係？', options: ['孔尚任','洪昇','王實甫','湯顯祖'], a: 0, hint: '孔尚任' },
+        { q: '《西廂記》作者係？', options: ['王實甫','關漢卿','馬致遠','白樸'], a: 0, hint: '王實甫' },
+        { q: '《西廂記》男女主角係張生同？', options: ['崔鶯鶯','杜麗娘','白素貞','霍小玉'], a: 0, hint: '崔鶯鶯' },
+        { q: '關漢卿代表作係？', options: ['《竇娥冤》','《西廂記》','《牡丹亭》','《長生殿》'], a: 0, hint: '竇娥冤' },
+        { q: '元曲四大家包括關漢卿、白樸、鄭光祖同？', options: ['馬致遠','王實甫','湯顯祖','孔尚任'], a: 0, hint: '馬致遠' },
+        { q: '豪放派詞人代表包括蘇軾同？', options: ['辛棄疾','柳永','李清照','秦觀'], a: 0, hint: '蘇辛' },
+        { q: '婉約派詞人代表不包括？', options: ['辛棄疾','柳永','李清照','秦觀'], a: 0, hint: '辛屬豪放' },
+        { q: '宋詞豪放派開創者一般認為係？', options: ['蘇軾','柳永','辛棄疾','晏殊'], a: 0, hint: '蘇軾' },
+        { q: '杜甫「三別」包括新婚別、垂老別同？', options: ['無家別','出塞別','從軍別','離亂別'], a: 0, hint: '無家別' },
+        { q: '杜甫「三吏」包括石壕吏、潼關吏同？', options: ['新安吏','牧馬吏','從軍吏','征兵吏'], a: 0, hint: '新安吏' },
+        { q: '晚清四大譴責小說不包括？', options: ['《紅樓夢》','《官場現形記》','《老殘遊記》','《孽海花》'], a: 0, hint: '紅樓夢非譴責小說' },
+        { q: '《官場現形記》作者係？', options: ['李寶嘉','吳沃堯','劉鶚','曾樸'], a: 0, hint: '李伯元' },
+        { q: '《二十年目睹之怪現狀》作者係？', options: ['吳沃堯','李寶嘉','劉鶚','曾樸'], a: 0, hint: '吳趼人' },
+        { q: '《老殘遊記》作者係？', options: ['劉鶚','李寶嘉','吳沃堯','曾樸'], a: 0, hint: '劉鶚' },
+        { q: '《孽海花》作者係？', options: ['曾樸','李寶嘉','劉鶚','吳沃堯'], a: 0, hint: '曾樸' },
+        { q: '中國古典長篇小說四大名著不包括？', options: ['《金瓶梅》','《紅樓夢》','《三國演義》','《水滸傳》'], a: 0, hint: '金瓶梅不入四大' },
+        { q: '《三國演義》故事背景嘅動亂係？', options: ['黃巾之亂','安史之亂','靖康之變','陳橋兵變'], a: 0, hint: '東漢末' },
+        { q: '《滕王閣序》作者係？', options: ['王勃','駱賓王','盧照鄰','楊炯'], a: 0, hint: '初唐四傑之首' },
+        { q: '楷書四大家包括顏真卿、柳公權、歐陽詢同？', options: ['趙孟頫','王羲之','張旭','懷素'], a: 0, hint: '趙孟頫' },
+        { q: '南宋四大家包括陸游、楊萬里、范成大同？', options: ['尤袤','辛棄疾','李清照','姜夔'], a: 0, hint: '尤袤' },
+        { q: '「竹林七賢」入面不包括邊位？', options: ['陶淵明','嵇康','阮籍','劉伶'], a: 0, hint: '陶淵明非竹林七賢' },
+        { q: '竹林七賢包括嵇康、阮籍、山濤、向秀、劉伶、阮咸同？', options: ['王戎','王羲之','王勃','王維'], a: 0, hint: '王戎' },
+        { q: '孔尚任、王實甫、湯顯祖、洪昇分別對應桃花扇、西廂記、牡丹亭同？', options: ['長生殿','竇娥冤','趙氏孤兒','琵琶記'], a: 0, hint: '洪昇長生殿' },
+        { q: '《水滸傳》係中國最早寫邊類題材嘅長篇小說？', options: ['農民起義','神魔','才子佳人','宮廷鬥爭'], a: 0, hint: '農民起義' },
+        { q: '《西遊記》係明代著名嘅邊類小說？', options: ['長篇神話／神魔小說','歷史演義','世情小說','俠義小說'], a: 0, hint: '神魔' },
+        { q: '一句話點評「中國科技史上嘅坐標」指？', options: ['《夢溪筆談》','《天工開物》','《齊民要術》','《本草綱目》'], a: 0, hint: '沈括' },
+        { q: '一句話點評「帝王嘅鏡子」指？', options: ['《資治通鑑》','《史記》','《漢書》','《論語》'], a: 0, hint: '司馬光' },
+        { q: '一句話點評「戰爭嘅規律」指？', options: ['《孫子兵法》','《三國演義》','《戰國策》','《六韜》'], a: 0, hint: '孫武' },
+        { q: '「舊時代嘅葬歌」評價嘅作品係？', options: ['《駱駝祥子》','《子夜》','《家》','《沉淪》'], a: 0, hint: '老舍' },
+        { q: '現代最偉大嘅文學家，冊子認為係？', options: ['魯迅','郭沫若','茅盾','巴金'], a: 0, hint: '魯迅' },
+        { q: '現代最傑出長篇小說，冊子舉嘅係茅盾嘅？', options: ['《子夜》','《春蠶》','《林家鋪子》','《蝕》'], a: 0, hint: '子夜' },
+        { q: '現代最有影響嘅短篇小說集，冊子舉魯迅嘅？', options: ['《吶喊》','《彷徨》','《故事新編》','《朝花夕拾》'], a: 0, hint: '吶喊' },
+      ],
+      university: [
+        { q: '中國第一部紀傳體通史係？', options: ['《史記》','《漢書》','《資治通鑑》','《左傳》'], a: 0, hint: '司馬遷' },
+        { q: '中國第一部斷代體史書係？', options: ['《漢書》','《史記》','《後漢書》','《三國志》'], a: 0, hint: '班固' },
+        { q: '第一部語錄體儒家經典散文作品係？', options: ['《論語》','《孟子》','《大學》','《中庸》'], a: 0, hint: '論語' },
+        { q: '第一部軍事著作係？', options: ['《孫子兵法》','《吳子兵法》','《六韜》','《三略》'], a: 0, hint: '孫武' },
+        { q: '第一部文學批評專著係曹丕嘅？', options: ['《典論·論文》','《文賦》','《文心雕龍》','《詩品》'], a: 0, hint: '典論' },
+        { q: '第一部詩歌理論專著係鍾嶸嘅？', options: ['《詩品》','《文心雕龍》','《典論·論文》','《藝概》'], a: 0, hint: '詩品' },
+        { q: '第一部科普作品係沈括嘅？', options: ['《夢溪筆談》','《天工開物》','《齊民要術》','《水經注》'], a: 0, hint: '夢溪筆談' },
+        { q: '第一部日記體遊記係？', options: ['《徐霞客遊記》','《山海經》','《水經注》','《大唐西域記》'], a: 0, hint: '徐霞客' },
+        { q: '中國第一部長篇諷刺小說係？', options: ['《儒林外史》','《官場現形記》','《二十年目睹之怪現狀》','《孽海花》'], a: 0, hint: '吳敬梓' },
+        { q: '第一部個人創作嘅文言短篇小說集係？', options: ['《聊齋志異》','《閱微草堂筆記》','《子不語》','《搜神記》'], a: 0, hint: '蒲松齡' },
+        { q: '中國第一部系統文學理論著作係？', options: ['《文心雕龍》','《典論·論文》','《詩品》','《文賦》'], a: 0, hint: '劉勰' },
+        { q: '《文心雕龍》作者係？', options: ['劉勰','鍾嶸','曹丕','陸機'], a: 0, hint: '劉勰' },
+        { q: '中國第一部長篇章回小說一般認為係？', options: ['《三國演義》','《水滸傳》','《紅樓夢》','《西遊記》'], a: 0, hint: '羅貫中' },
+        { q: '「話本」係邊朝說書人嘅底本？', options: ['宋代','唐代','漢代','清代'], a: 0, hint: '宋人話本' },
+        { q: '中國現代文學史上第一篇白話小說係魯迅嘅？', options: ['《狂人日記》','《阿Q正傳》','《孔乙己》','《故鄉》'], a: 0, hint: '1918年' },
+        { q: '魯迅原名係？', options: ['周樹人','周作人','魯迅','周建人'], a: 0, hint: '周樹人' },
+        { q: '《新青年》雜誌創辦人係？', options: ['陳獨秀','胡適','李大釗','魯迅'], a: 0, hint: '陳獨秀' },
+        { q: '中國第一部白話新詩集《嘗試集》作者係？', options: ['胡適','郭沫若','徐志摩','聞一多'], a: 0, hint: '胡適' },
+        { q: '新文學史上影響最大嘅新詩集之一係郭沫若嘅？', options: ['《女神》','《星空》','《瓶》','《前茅》'], a: 0, hint: '女神' },
+        { q: '魯迅第一部散文詩集係？', options: ['《野草》','《朝花夕拾》','《墳》','《熱風》'], a: 0, hint: '野草' },
+        { q: '魯迅第一部雜文集，冊子舉嘅係？', options: ['《墳》','《熱風》','《華蓋集》','《而已集》'], a: 0, hint: '墳' },
+        { q: '冊子稱第一部中篇小說係魯迅嘅？', options: ['《阿Q正傳》','《祝福》','《傷逝》','《藥》'], a: 0, hint: '阿Q正傳' },
+        { q: '中國第一首長篇敘事詩一般認為係？', options: ['《孔雀東南飛》','《木蘭詩》','《長恨歌》','《琵琶行》'], a: 0, hint: '漢樂府' },
+        { q: '第一首以信天游寫成嘅民歌體敘事長詩係李季嘅？', options: ['《王貴與李香香》','《漳河水》','《王貴》','《李有才板話》'], a: 0, hint: '王貴與李香香' },
+        { q: '第一部水文地理專著係？', options: ['《水經注》','《山海經》','《禹貢》','《徐霞客遊記》'], a: 0, hint: '酈道元' },
+        { q: '第一部著名戲曲作品，冊子舉關漢卿嘅？', options: ['《竇娥冤》','《救風塵》','《望江亭》','《單刀會》'], a: 0, hint: '竇娥冤' },
+        { q: '第一部專記個人言行嘅歷史散文係？', options: ['《晏子春秋》','《論語》','《戰國策》','《國語》'], a: 0, hint: '晏子春秋' },
+        { q: '魯迅稱《史記》為「史家之絕唱，無韻之」？', options: ['《離騷》','《詩經》','《楚辭》','《左傳》'], a: 0, hint: '無韻之離騷' },
+        { q: '《史記》全書大約有幾多篇？', options: ['130篇','100篇','200篇','24篇'], a: 0, hint: '十二本紀等共一百三十篇' },
+        { q: '「四史」包括《史記》、《漢書》、《後漢書》同？', options: ['《三國志》','《資治通鑑》','《春秋》','《左傳》'], a: 0, hint: '前四史' },
+        { q: '二十四史中嘅前四部即「四史」，第一部係？', options: ['《史記》','《漢書》','《三國志》','《晉書》'], a: 0, hint: '史記' },
+        { q: '世界文學「四大吝嗇鬼」中，出自莎士比亞《威尼斯商人》嘅係？', options: ['夏洛克','阿巴貢','葛朗台','潑留希金'], a: 0, hint: '夏洛克' },
+        { q: '四大吝嗇鬼中，莫里哀《慳吝人》嘅角色係？', options: ['阿巴貢','夏洛克','葛朗台','潑留希金'], a: 0, hint: '阿巴貢' },
+        { q: '四大吝嗇鬼中，巴爾扎克筆下嘅係？', options: ['葛朗台','夏洛克','阿巴貢','潑留希金'], a: 0, hint: '歐也妮·葛朗台' },
+        { q: '四大吝嗇鬼中，果戈理《死魂靈》嘅角色係？', options: ['潑留希金','夏洛克','阿巴貢','葛朗台'], a: 0, hint: '潑留希金' },
+        { q: '科舉考試中，鄉試錄取者稱？', options: ['舉人','秀才','進士','貢士'], a: 0, hint: '鄉試中舉' },
+        { q: '科舉殿試第一名係？', options: ['狀元','榜眼','探花','傳臚'], a: 0, hint: '一甲第一' },
+        { q: '殿試一甲第二名係？', options: ['榜眼','狀元','探花','貢士'], a: 0, hint: '榜眼' },
+        { q: '殿試一甲第三名係？', options: ['探花','狀元','榜眼','會元'], a: 0, hint: '探花' },
+        { q: '「連中三元」指連續考中？', options: ['解元、會元、狀元','秀才、舉人、進士','院試、鄉試、會試','榜眼、探花、傳臚'], a: 0, hint: '鄉會殿三第一' },
+        { q: '明清科舉最高一級考試「殿試」喺邊度舉行？', options: ['皇宮／殿廷','各府學宮','省城貢院','縣衙'], a: 0, hint: '天子主考' },
+        { q: '新文學史上第一位偉大詩人，冊子舉？', options: ['郭沫若','胡適','徐志摩','聞一多'], a: 0, hint: '郭沫若' },
+        { q: '第一位兒童文學作家，冊子舉？', options: ['冰心','葉聖陶','張天翼','陳伯吹'], a: 0, hint: '冰心' },
+        { q: '第一個開拓童話園地嘅作家，冊子舉？', options: ['葉聖陶','冰心','魯迅','茅盾'], a: 0, hint: '葉聖陶' },
+        { q: '第一位獲得「人民藝術家」稱號嘅作家係？', options: ['老舍','魯迅','茅盾','巴金'], a: 0, hint: '老舍' },
+        { q: '第一位女詩人，冊子舉？', options: ['蔡文姬','李清照','薛濤','上官婉兒'], a: 0, hint: '蔡琰' },
+        { q: '荷馬史詩包括《伊利亞特》同？', options: ['《奧德賽》','《神曲》','《失樂園》','《伊尼亞德》'], a: 0, hint: '奧德賽' },
+        { q: '莎士比亞「四大悲劇」不包括？', options: ['《羅密歐與茱麗葉》','《哈姆雷特》','《奧賽羅》','《麥克白》'], a: 0, hint: '四大悲劇係哈奧李麥' },
+        { q: '中國第一部詩話係歐陽修嘅？', options: ['《六一詩話》','《滄浪詩話》','《人間詞話》','《甌北詩話》'], a: 0, hint: '六一居士' },
+        { q: '《爾雅》喺傳統分類中屬於？', options: ['訓詁／詞典','韻書','類書','叢書'], a: 0, hint: '釋詁釋言' },
+        { q: '世界最長史詩《摩訶婆羅多》屬於邊國文學？', options: ['印度','希臘','波斯','埃及'], a: 0, hint: '印度' },
+        { q: '第一部報告文學作品，冊子舉夏衍嘅？', options: ['《包身工》','《誰是最可愛的人》','《長江三日》','《哥德巴赫猜想》'], a: 0, hint: '包身工' },
+        { q: '文學研究會於1921年成立，發起人包括周作人、鄭振鐸、沈雁冰同？', options: ['葉紹鈞','郭沫若','郁達夫','徐志摩'], a: 0, hint: '文學研究會' },
+      ],
+      master: [
+        { q: '帝王自稱常用「孤、寡」同？', options: ['朕','臣','仆','愚'], a: 0, hint: '皇帝稱朕' },
+        { q: '讀書人謙稱自己，唔包括邊個？', options: ['聖上','不才','晚生','小生'], a: 0, hint: '聖上係敬稱帝王' },
+        { q: '稱自己一方嘅父親常用？', options: ['家父','令尊','令堂','尊君'], a: 0, hint: '家大舍小令外人' },
+        { q: '稱對方父親應講？', options: ['令尊','家父','家嚴','家君'], a: 0, hint: '令尊' },
+        { q: '稱對方母親應講？', options: ['令堂','家母','家慈','令尊'], a: 0, hint: '令堂' },
+        { q: '稱對方兒子應講？', options: ['令郎','犬子','小兒','舍侄'], a: 0, hint: '令郎／令公子' },
+        { q: '稱已去世嘅父親為？', options: ['先考／先父','家父','令尊','尊君'], a: 0, hint: '生曰父，死曰考' },
+        { q: '稱已去世嘅母親為？', options: ['先妣／先慈','家母','令堂','尊堂'], a: 0, hint: '先妣' },
+        { q: '唐以後稱岳父為丈人，又叫？', options: ['泰山','泰水','東床','冰人'], a: 0, hint: '泰山' },
+        { q: '孔子被尊為？', options: ['聖人','亞聖','詩聖','畫聖'], a: 0, hint: '孔聖人' },
+        { q: '孟子被尊為？', options: ['亞聖','聖人','詩聖','武聖'], a: 0, hint: '亞聖' },
+        { q: '吳道子被尊為？', options: ['畫聖','書聖','詩聖','茶聖'], a: 0, hint: '畫聖' },
+        { q: '後來「聖」亦常用於稱？', options: ['帝王','商人','農夫','工匠'], a: 0, hint: '聖上、聖駕' },
+        { q: '稱同輩友人中長於自己嘅人為？', options: ['仁兄','賢弟','犬子','在下'], a: 0, hint: '仁兄' },
+        { q: '「伯仲叔季」中，「伯」係？', options: ['老大','老二','老三','老四'], a: 0, hint: '伯／孟為長' },
+        { q: '「伯仲叔季」中，「季」係？', options: ['老四','老大','老二','老三'], a: 0, hint: '季最小' },
+        { q: '「金蘭之交」指？', options: ['情誼契合、親如兄弟','買賣朋友','酒肉朋友','一面之緣'], a: 0, hint: '結金蘭' },
+        { q: '「刎頸之交」指？', options: ['同生死共患難','普通同學','商業夥伴','遠房親戚'], a: 0, hint: '可共生死' },
+        { q: '「忘年之交」指？', options: ['輩份或年齡相差大仍然相交','同年同月生','只喺網上識','一面之交'], a: 0, hint: '忘年' },
+        { q: '「貧賤之交」指？', options: ['窮困微賤時結交','發達之後先識','只講利益','官場應酬'], a: 0, hint: '貧賤之交不可忘' },
+        { q: '「患難之交」指？', options: ['喺磨難中結成嘅朋友','酒肉朋友','普通鄰居','遠親'], a: 0, hint: '患難見真情' },
+        { q: '百姓又可稱為布衣、黎民、黔首同？', options: ['蒼生','聖上','天子','縉紳'], a: 0, hint: '布衣黔首' },
+        { q: '諸葛亮草廬對聯「淡泊以明志」下句係？', options: ['寧靜以致遠','明月幾時有','天生我材必有用','先天下之憂而憂'], a: 0, hint: '誡子書' },
+        { q: '陸游書齋聯「萬卷古今消永日」下句係？', options: ['一窗昏曉送流年','一箇南腔北調人','七尺從天乞活埋','立志讀盡人間書'], a: 0, hint: '書齋對聯' },
+        { q: '徐渭青藤書屋聯「幾間東倒西歪屋」下句係？', options: ['一個南腔北調人','一窗昏曉送流年','寧靜以致遠','破釜沉舟'], a: 0, hint: '青藤書屋' },
+        { q: '王夫之書齋聯「六經責我開生面」下句係？', options: ['七尺從天乞活埋','一窗昏曉送流年','立志讀盡人間書','淡泊以明志'], a: 0, hint: '船山' },
+        { q: '蒲松齡書齋聯有「破釜沉舟，百二秦關終屬楚」，下聯用嘅典故係？', options: ['臥薪嘗膽','圍魏救趙','完璧歸趙','負荊請罪'], a: 0, hint: '越王勾踐' },
+        { q: '「郊寒島瘦」中嘅「島」指？', options: ['賈島','孟郊','賈誼','島夷'], a: 0, hint: '推敲賈島' },
+        { q: '被尊為「茶聖」嘅係？', options: ['陸羽','盧仝','蔡襄','蘇軾'], a: 0, hint: '茶經' },
+        { q: '被尊為「醫聖」嘅係？', options: ['張仲景','李時珍','孫思邈','華佗'], a: 0, hint: '傷寒雜病論' },
+        { q: '被尊為「藥聖／藥王」常指？', options: ['孫思邈或李時珍','張仲景','華佗','扁鵲'], a: 0, hint: '千金方／本草綱目' },
+        { q: '被尊為「武聖」嘅係？', options: ['關羽','岳飛','韓信','尉遲恭'], a: 0, hint: '關公' },
+        { q: '被尊為「酒聖」常指？', options: ['杜康','劉伶','李白','嵇康'], a: 0, hint: '造酒始祖' },
+        { q: '被尊為「木聖／匠聖」嘅係？', options: ['魯班','歐冶子','墨翟','奚仲'], a: 0, hint: '木工祖師' },
+        { q: '被尊為「史聖」嘅係？', options: ['司馬遷','司馬光','班固','陳壽'], a: 0, hint: '史記' },
+        { q: '「韋編三絕」講孔子反覆讀？', options: ['《易經》','《詩經》','《尚書》','《春秋》'], a: 0, hint: '讀易' },
+        { q: '「圖窮匕見」講嘅係？', options: ['荊軻刺秦王','項羽破釜沉舟','勾踐臥薪嘗膽','藺相如完璧歸趙'], a: 0, hint: '荊軻' },
+        { q: '「指鹿為馬」嘅主角係？', options: ['趙高','李斯','秦檜','嚴嵩'], a: 0, hint: '秦宦官' },
+        { q: '「入木三分」最初形容邊位書法家？', options: ['王羲之','顏真卿','柳公權','張旭'], a: 0, hint: '書聖' },
+        { q: '「四面楚歌」同邊個有關？', options: ['項羽','劉邦','韓信','張良'], a: 0, hint: '垓下' },
+        { q: '「口蜜腹劍」形容唐朝邊位宰相？', options: ['李林甫','楊國忠','秦檜','和珅'], a: 0, hint: '玄宗朝' },
+        { q: '「風聲鶴唳」同淝水之戰有關，主角係？', options: ['苻堅','謝安','王猛','桓溫'], a: 0, hint: '前秦' },
+        { q: '「一鼓作氣」典故出自邊個？', options: ['曹劌','孫武','韓信','項羽'], a: 0, hint: '曹劌論戰' },
+        { q: '「一字千金」同邊個有關？', options: ['呂不韋','韓信','司馬遷','李白'], a: 0, hint: '呂氏春秋' },
+        { q: '「一飯千金」報恩嘅係？', options: ['韓信','劉邦','項羽','張良'], a: 0, hint: '漂母之恩' },
+        { q: '「東山再起」講嘅係？', options: ['謝安','謝玄','謝靈運','謝朓'], a: 0, hint: '東山隱居後復出' },
+        { q: '「紙上談兵」諷刺邊個？', options: ['趙括','廉頗','白起','王翦'], a: 0, hint: '長平之戰' },
+        { q: '「負荊請罪」嘅主角係？', options: ['廉頗','藺相如','趙括','李牧'], a: 0, hint: '將相和' },
+        { q: '「臥薪嘗膽」講邊個？', options: ['勾踐','夫差','伍子胥','范蠡'], a: 0, hint: '越王' },
+        { q: '「揭竿而起」同邊個有關？', options: ['陳勝吳廣','劉邦','項羽','黃巢'], a: 0, hint: '大澤鄉' },
+        { q: '「三顧茅廬」主角係？', options: ['劉備','曹操','孫權','諸葛亮'], a: 0, hint: '請孔明' },
+        { q: '「孺子可教」張良遇嘅老人係？', options: ['黃石公','鬼谷子','姜子牙','老子'], a: 0, hint: '圯上老人' },
+        { q: '「老當益壯」係邊句名言，同邊個有關？', options: ['馬援','廉頗','黃忠','趙雲'], a: 0, hint: '馬革裹尸同馬援' },
+        { q: '「投筆從戎」講邊個？', options: ['班超','班固','司馬遷','張騫'], a: 0, hint: '棄文就武' },
+        { q: '「暗度陳倉」係韓信同邊個計謀配合？', options: ['明修棧道','圍魏救趙','釜底抽薪','聲東擊西'], a: 0, hint: '漢定三秦' },
+        { q: '「怒髮衝冠」同邊個有關？', options: ['藺相如','項羽','岳飛','張飛'], a: 0, hint: '完璧歸趙時' },
+        { q: '「手不釋卷」講吳國將領？', options: ['呂蒙','周瑜','魯肅','陸遜'], a: 0, hint: '士別三日' },
+        { q: '「墨守成規」同邊個學派人物有關？', options: ['墨子','孔子','韓非子','老子'], a: 0, hint: '墨守即墨家守城' },
+      ],
+      phd: [
+        { q: '「暴殄天物」原意近於？', options: ['任意糟蹋東西','上天保佑','勤儉持家','開源節流'], a: 0, hint: '尚書' },
+        { q: '「嗟來之食」講嘅係？', options: ['不吃帶侮辱嘅施捨','飢不擇食','賓客滿堂','以酒待客'], a: 0, hint: '不食嗟來之食' },
+        { q: '「程門立雪」講楊時向邊位求學？', options: ['程頤','朱熹','周敦頤','張載'], a: 0, hint: '程門' },
+        { q: '「司空見慣」同邊位詩人有關？', options: ['劉禹錫','白居易','李白','杜甫'], a: 0, hint: '司空見慣渾閒事' },
+        { q: '「夢筆生花」傳說同邊位有關？', options: ['李白','杜甫','王勃','李賀'], a: 0, hint: '妙筆生花' },
+        { q: '「力透紙背」常用嚟讚？', options: ['書法筆力／文章深刻','武功高強','嗓門大','跑得快'], a: 0, hint: '顏真卿等' },
+        { q: '「赤膊上陣」出自《三國演義》邊個？', options: ['許褚','張飛','典韋','趙雲'], a: 0, hint: '許褚裸衣鬥馬超' },
+        { q: '「馬革裹屍」係邊個嘅壯志？', options: ['馬援','班超','霍去病','衛青'], a: 0, hint: '戰死沙場' },
+        { q: '「黃袍加身」講邊個稱帝？', options: ['趙匡胤','朱元璋','李世民','劉邦'], a: 0, hint: '陳橋兵變' },
+        { q: '「洛陽紙貴」因為邊部作品風行？', options: ['左思《三都賦》','司馬相如《子虛賦》','賈誼《過秦論》','張衡《二京賦》'], a: 0, hint: '三都賦' },
+        { q: '「背水一戰」韓信用於邊場戰役？', options: ['井陘之戰','垓下之戰','赤壁之戰','淝水之戰'], a: 0, hint: '破趙' },
+        { q: '「聞雞起舞」係祖逖同邊個？', options: ['劉琨','祖沖之','祖逖獨自','陶侃'], a: 0, hint: '劉琨' },
+        { q: '「初出茅廬」講諸葛亮出山後先？', options: ['火燒博望','空城計','借東風','六出祁山'], a: 0, hint: '第一把火' },
+        { q: '「完璧歸趙」嘅使者係？', options: ['藺相如','廉頗','趙括','平原君'], a: 0, hint: '和氏璧' },
+        { q: '「東窗事發」傳說同邊個奸臣有關？', options: ['秦檜','趙高','曹操','魏忠賢'], a: 0, hint: '害岳飛' },
+        { q: '「樂不思蜀」講邊個？', options: ['劉禪','劉備','劉邦','劉秀'], a: 0, hint: '阿斗' },
+        { q: '「退避三舍」係重耳（晉文公）對邊國嘅承諾？', options: ['楚國','秦國','齊國','燕國'], a: 0, hint: '城濮之戰' },
+        { q: '「畫龍點睛」傳說係邊位畫家？', options: ['張僧繇','顧愷之','吳道子','閻立本'], a: 0, hint: '金陵安樂寺' },
+        { q: '「諱疾忌醫」同邊個國君有關？', options: ['蔡桓公','齊桓公','楚莊王','秦穆公'], a: 0, hint: '扁鵲見蔡桓公' },
+        { q: '「鞠躬盡瘁」出師表中，係邊個自況？', options: ['諸葛亮','蔣琬','姜維','趙雲'], a: 0, hint: '後出師表' },
+        { q: '「一字之師」講齊己同邊位改詩？', options: ['鄭谷','賈島','韓愈','歐陽修'], a: 0, hint: '改「數」為「一」' },
+        { q: '「困獸猶鬥」意思係？', options: ['走投無路仍然掙扎抵抗','打得過就打','臨陣脫逃','不戰而降'], a: 0, hint: '困獸' },
+        { q: '古詩中「桑梓」常借指？', options: ['家鄉','學生','戰爭','朝廷'], a: 0, hint: '桑梓之情' },
+        { q: '古詩中「桃李」常借指？', options: ['學生','家鄉','戰爭','月亮'], a: 0, hint: '桃李滿天下' },
+        { q: '「巾幗」借指？', options: ['婦女','男子','小孩','老人'], a: 0, hint: '巾幗不讓鬚眉' },
+        { q: '「鬚眉」借指？', options: ['男子','婦女','文官','武將'], a: 0, hint: '鬚眉丈夫' },
+        { q: '「汗青」借指？', options: ['史冊','考卷','書信','農事'], a: 0, hint: '留取丹心照汗青' },
+        { q: '「嬋娟」在蘇軾詞中借指？', options: ['月亮','美女','酒','江水'], a: 0, hint: '千里共嬋娟' },
+        { q: '「社稷」借指？', options: ['國家','社日','莊稼','土地廟'], a: 0, hint: '江山社稷' },
+        { q: '「鴻雁」常借指？', options: ['書信','戰爭','學生','月亮'], a: 0, hint: '鴻雁傳書' },
+        { q: '「白丁」同「布衣」都可指？', options: ['平民','高官','和尚','商人專稱'], a: 0, hint: '沒有功名' },
+        { q: '「伉儷」指？', options: ['夫妻','兄弟','師生','朋友'], a: 0, hint: '伉儷情深' },
+        { q: '「南冠」借指？', options: ['囚犯','南方人','武將','書生'], a: 0, hint: '南冠楚囚' },
+        { q: '「絲竹」借指？', options: ['音樂','莊稼','書信','武器'], a: 0, hint: '絲竹管弦' },
+        { q: '「烽煙」借指？', options: ['戰爭','炊煙','祭祀','科舉'], a: 0, hint: '烽火連天' },
+        { q: '「廟堂」借指？', options: ['朝廷','寺廟建築本身','市場','私塾'], a: 0, hint: '居廟堂之高' },
+        { q: '「三尺」在古代可借指？', options: ['法律','農具','船隻','樂器'], a: 0, hint: '三尺法' },
+        { q: '「已知天下三分鼎，猶竭人謀出師」讚？', options: ['諸葛亮','司馬懿','周瑜','曹操'], a: 0, hint: '出師表' },
+        { q: '「出師未捷身先死」之外，『出師一表真名世』讚？', options: ['諸葛亮','岳飛','文天祥','陸游自己'], a: 0, hint: '陸游書憤' },
+        { q: '「剛直不阿，留得正氣沖霄漢」讚嘅史官係？', options: ['司馬遷','班固','司馬光','左丘明'], a: 0, hint: '史記作者' },
+        { q: '「酌酒花間磨碎月」呢類豪放句常聯想到？', options: ['李白','杜甫','王維','孟浩然'], a: 0, hint: '詩仙' },
+        { q: '「千古詩才，蓬萊文章建安骨」讚？', options: ['李白','杜甫','曹植','王勃'], a: 0, hint: '李杜優劣論中亦有此類句' },
+        { q: '「鐵板銅琶繼東坡高唱大江東去」讚邊位豪放詞人？', options: ['辛棄疾','柳永','李清照','姜夔'], a: 0, hint: '稼軒' },
+        { q: '「翁去八百年，醉翁猶在」同邊篇文章有關？', options: ['《醉翁亭記》','《岳陽樓記》','《赤壁賦》','《蘭亭集序》'], a: 0, hint: '歐陽修' },
+        { q: '關漢卿被稱為「東方嘅莎士比亞」，代表作《竇娥冤》屬？', options: ['雜劇','傳奇','話本','賦'], a: 0, hint: '元雜劇' },
+        { q: '「東方嘅莎士比亞」呢個稱號，冊子畀咗？', options: ['關漢卿','湯顯祖','王實甫','馬致遠'], a: 0, hint: '關漢卿' },
+        { q: '蘇州又有「中國嘅威尼斯」之稱，因為？', options: ['水巷多、河道密','喺海邊','終年下雪','全城係山'], a: 0, hint: '水鄉' },
+        { q: '徐州嘅古稱係？', options: ['彭城','金陵','建康','廣陵'], a: 0, hint: '彭城' },
+        { q: '農曆紀月：每月初一叫？', options: ['朔','望','晦','既望'], a: 0, hint: '朔日' },
+        { q: '農曆每月十五（大月十六）叫？', options: ['望','朔','晦','上弦'], a: 0, hint: '月圓為望' },
+        { q: '天干地支配成六十甲子，天干係甲乙丙丁等，地支第一位係？', options: ['子','丑','寅','亥'], a: 0, hint: '子鼠' },
+        { q: '古代把一夜分成五更，又用十二時辰紀時，子時大約係？', options: ['23時至1時','11時至13時','5時至7時','17時至19時'], a: 0, hint: '夜半' },
+        { q: '閏年嘅設置，主要為咗？', options: ['令曆法同季節對齊','增加假期','紀念屈原','方便科舉'], a: 0, hint: '回歸年同陰曆差額' },
+        { q: '「八荒」指？', options: ['東、南、西、北同東南、西南、西北、東北','只得東西南北','海外三神山','五嶽加三山'], a: 0, hint: '八方極遠' },
+        { q: '中國古稱唔包括邊個？', options: ['扶桑','華夏','神州','九州'], a: 0, hint: '扶桑多指日本' },
+        { q: '四大名橋包括趙州橋、盧溝橋、廣濟橋同？', options: ['洛陽橋','南京長江大橋','十七孔橋','五亭橋'], a: 0, hint: '泉州洛陽橋' },
+        { q: '四大名剎包括靈岩寺、國清寺、玉泉寺同？', options: ['棲霞寺','少林寺','白馬寺','寒山寺'], a: 0, hint: '南京棲霞' },
+        { q: '「九流」包括儒家、道家、墨家、法家、名家、雜家、農家、縱橫家同？', options: ['陰陽家','小說家','兵家','醫家'], a: 0, hint: '九流' },
+        { q: '春秋戰國百家爭鳴中，法家代表人物係？', options: ['韓非子','孔子','墨子','莊子'], a: 0, hint: '韓非' },
+        { q: '墨家代表人物係？', options: ['墨子','老子','荀子','孟子'], a: 0, hint: '墨翟' },
+        { q: '孔子名丘，字？', options: ['仲尼','子輿','子長','子瞻'], a: 0, hint: '字仲尼' },
+        { q: '孟子名軻，字？', options: ['子輿','仲尼','子長','子瞻'], a: 0, hint: '字子輿' },
+        { q: '「十三經」唔包括邊本？', options: ['《史記》','《論語》','《孟子》','《左傳》'], a: 0, hint: '史記非經' },
+        { q: '《四庫全書》分經、史、子同？', options: ['集','叢','類','部'], a: 0, hint: '經史子集' },
+      ]
+    };
+
+    /* ============ 狀態 ============ */
+    let selectedLevelIndex = -1;
+    let currentLevel = 0;
+    let levelScore = 0;           // 本關答對率（百分制，滿分 100）
+    let levelPoints = 0;          // 本關分數（晉級門檻用）
+    let newlyUnlockedNames = [];  // 本次遊戲新解鎖的級別名
+    let currentQuestion = 0;
+    let score = 0;
+    let lives = MAX_LIVES;
+    let timer;
+    let timeLeft;
+    let levelQuestions = [];
+    let currentShuffled = null;
+    let wrongAnswers = [];
+    const usedQuestions = new Set();
+    let lifelineUsedCount = { fifty: 0, hint: 0, skip: 0 };
+
+    const startScreen = document.getElementById('startScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const levelGrid = document.getElementById('levelGrid');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+
+    /* ============ 排行榜（localStorage） ============ */
+    const LB_KEY = 'wenxue_millionaire_lb';
+    function loadBoard() {
+      try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; }
+      catch (e) { return []; }
+    }
+    function saveBoard(board) {
+      try { localStorage.setItem(LB_KEY, JSON.stringify(board)); } catch (e) {}
+    }
+    function addScore(name, sc, lvName) {
+      name = (name || '').trim() || '匿名';
+      const today = new Date().toLocaleDateString('zh-Hant');
+      const board = loadBoard();
+      const i = board.findIndex(r => r.name === name);
+      if (i >= 0) {
+        const old = board[i];
+        const better = sc > (old.score || 0);
+        board[i] = {
+          name,
+          score: better ? sc : old.score,
+          level: lvName || old.level,
+          date: today
+        };
+      } else {
+        board.push({ name, score: sc, level: lvName, date: today });
+      }
+      board.sort((a, b) => b.score - a.score);
+      const top = board.slice(0, 20);
+      try {
+        localStorage.setItem(LB_KEY, JSON.stringify(top));
+      } catch (e) {
+        alert('排行榜儲存失敗（可能瀏覽器限制咗本地儲存）。請用同一個檔案開啟，或唔好用無痕模式。');
+      }
+      return top;
+    }
+    function refreshBoards() {
+      const legend = titleLegendHtml();
+      const sl = document.getElementById('startTitleLegend');
+      const rl = document.getElementById('resultTitleLegend');
+      if (sl) sl.textContent = legend;
+      if (rl) rl.textContent = legend;
+      const a = document.getElementById('startBoardBody');
+      const b = document.getElementById('resultBoardBody');
+      if (a) renderBoardBody(a);
+      if (b) renderBoardBody(b);
+    }
+    function boardLevelLabel() {
+      if (currentUser) {
+        const rec = getUserRecord(currentUser);
+        const idx = rec ? rec.unlocked : currentLevel;
+        return levels[Math.min(Math.max(idx, 0), levels.length - 1)].name;
+      }
+      return levels[currentLevel].name;
+    }
+    function renderBoardBody(el) {
+      if (!el) return;
+      const board = loadBoard();
+      if (board.length === 0) {
+        el.innerHTML = '<div class="empty">仲未有人上榜，快啲做第一個！🏆</div>';
+        return;
+      }
+      let rows = '<table><thead><tr><th>#</th><th>呢稱</th><th>稱號</th><th>已解鎖</th><th style="text-align:right">分數</th></tr></thead><tbody>';
+      board.forEach((r, i) => {
+        const title = titleFromScore(r.score || 0);
+        rows += `<tr><td class="rank">${i + 1}</td><td>${escapeHtml(r.name)}</td><td class="title-cell">${escapeHtml(title)}</td><td>${escapeHtml(r.level || '—')}</td><td class="sc">${r.score}</td></tr>`;
+      });
+      rows += '</tbody></table>';
+      el.innerHTML = rows;
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    const ADMIN_PWD = '12345678';
+    document.getElementById('clearBoardBtn').addEventListener('click', () => {
+      const pwd = prompt('🔒 請輸入管理員密碼以清空記錄：');
+      if (pwd === null) return;                       // 按「取消」即放棄
+      if (pwd !== ADMIN_PWD) { alert('密碼錯誤，只有管理員可以清空記錄。'); return; }
+      if (confirm('確定清空排行榜？此動作唔可以復原。')) { saveBoard([]); refreshBoards(); }
+    });
+
+    /* ============ 抽題 ============ */
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    function pickQuestions(levelId, n) {
+      let avail = questionBank[levelId].filter(q => !usedQuestions.has(q.q));
+      if (avail.length < n) avail = questionBank[levelId].slice();
+      const picked = shuffle(avail).slice(0, n);
+      picked.forEach(q => usedQuestions.add(q.q));
+      return picked;
+    }
+    function shuffleOptions(q) {
+      const idx = q.options.map((opt, i) => ({ opt, isCorrect: i === q.a }));
+      const sh = shuffle(idx);
+      return { options: sh.map(x => x.opt), correct: sh.findIndex(x => x.isCorrect) };
+    }
+
+    /* ============ 難度卡片（含鎖定） ============ */
+    function renderLevelCards() {
+      levelGrid.innerHTML = '';
+      const unlocked = getUnlocked();
+      levels.forEach((lv, idx) => {
+        const locked = idx > unlocked;
+        const card = document.createElement('div');
+        card.className = 'level-card' + (locked ? ' locked' : '');
+        const rec = currentUser ? getUserRecord(currentUser) : null;
+        const passed = rec && rec.passed && rec.passed[idx];
+        const desc = locked ? '🔒 未解鎖' : (passed ? '✓ 已達標 · ' + lv.desc : '門檻 ' + scoreNeed(idx) + ' 分');
+        card.innerHTML = `<div class="emoji">${lv.emoji}</div><div class="name">${lv.name}</div><div class="desc">${desc}</div>`;
+        if (!locked) {
+          card.addEventListener('click', () => {
+            initAudio();
+            document.querySelectorAll('.level-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedLevelIndex = idx;
+            startBtn.disabled = false;
+            startBtn.textContent = `由${lv.name}開始 🚀`;
+            sndClick();
+          });
+        } else {
+          card.title = '需先通過上一級：答對率 ≥' + UNLOCK_NEED + '% 且本關分數 ≥' + scoreNeed(idx - 1) + ' 方可解鎖';
+        }
+        levelGrid.appendChild(card);
+      });
+    }
+    restoreSession();
+    renderLevelCards();
+    renderUserPanel();
+
+    startBtn.addEventListener('click', () => { initAudio(); startGame(selectedLevelIndex); });
+
+    /* 統一返回首頁：清場、重置選項、停 timer、重渲染難度卡與排行榜 */
+    function goToStart() {
+      clearInterval(timer);
+      usedQuestions.clear();
+      selectedLevelIndex = -1;
+      if (!currentUser) sessionUnlocked = 0;   // 遊客：返回首頁即清零進度
+      startBtn.disabled = true;
+      startBtn.textContent = '選擇難度開始 🚀';
+      gameScreen.classList.add('hidden');
+      resultScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+      renderLevelCards();
+      renderUserPanel();
+      refreshBoards();
+      const panel = document.getElementById('userPanel');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    restartBtn.addEventListener('click', goToStart);
+
+    /* 遊戲途中安全退出 -> 返回首頁（停 timer、清場、重置選項） */
+    document.getElementById('quitBtn').addEventListener('click', () => {
+      const msg = currentUser
+        ? '退出本場？呢一局分數唔計，但帳戶「' + currentUser + '」已解鎖嘅難度會保留。返回首頁後可以直接再揀關。'
+        : '你而家係遊客，退出後呢一局同解鎖難度都唔會保存。要保留可揀難度，請先返回首頁註冊／登入。仍要退出嗎？';
+      if (confirm(msg)) goToStart();
+    });
+
+    /* 結算頁頂部返回首頁（唔使 confirm，因已出成績） */
+    document.getElementById('quitResultBtn').addEventListener('click', goToStart);
+
+    function startGame(startIndex) {
+      currentLevel = startIndex;
+      score = 0;
+      lives = MAX_LIVES;
+      wrongAnswers = [];
+      lifelineUsedCount = { fifty: 0, hint: 0, skip: 0 };
+      levelScore = 0;
+      levelPoints = 0;
+      newlyUnlockedNames = [];
+      startScreen.classList.add('hidden');
+      resultScreen.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+      loadLevel(currentLevel);
+    }
+
+    function loadLevel(levelIndex) {
+      const lv = levels[levelIndex];
+      const badge = document.getElementById('levelBadge');
+      badge.textContent = `${lv.emoji} ${lv.name}`;
+      badge.style.color = lv.color;
+      badge.style.background = lv.color + '15';
+      levelScore = 0;
+      levelPoints = 0;
+      const need = scoreNeed(levelIndex);
+      document.getElementById('promoBar').innerHTML =
+        `📌 達標：答對率 <b>≥ ${UNLOCK_NEED}%</b>（≥${CORRECT_NEED}/25）<b>且本關分數 ≥ ${need}</b> 才可解鎖下一級／已解鎖更高級 ｜ 剩餘生命 ❤️ ${lives}`;
+      const lvScoreEl = document.getElementById('levelScoreValue');
+      if (lvScoreEl) lvScoreEl.textContent = '0';
+      currentQuestion = 0;
+      levelQuestions = pickQuestions(lv.id, QUESTIONS_PER_LEVEL);
+      renderLifelines();
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const q = levelQuestions[currentQuestion];
+      document.getElementById('qIndex').textContent = currentQuestion + 1;
+      document.getElementById('livesValue').textContent = lives;
+      document.getElementById('scoreValue').textContent = score;
+      const lvScoreEl = document.getElementById('levelScoreValue');
+      if (lvScoreEl) lvScoreEl.textContent = levelPoints;
+      document.getElementById('questionText').textContent = q.q;
+      document.getElementById('hintBox').classList.add('hidden');
+
+      currentShuffled = shuffleOptions(q);
+      const box = document.getElementById('optionsBox');
+      box.innerHTML = '';
+      currentShuffled.options.forEach((opt, idx) => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.innerHTML = `<span class="letter">${String.fromCharCode(65 + idx)}</span><span>${opt}</span>`;
+        div.addEventListener('click', () => answer(idx, div));
+        box.appendChild(div);
+      });
+
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(timer);
+      timeLeft = 30;
+      const fill = document.getElementById('timerFill');
+      fill.style.transition = 'none';
+      fill.style.width = '100%';
+      setTimeout(() => { fill.style.transition = 'width 1s linear'; }, 50);
+      timer = setInterval(() => {
+        timeLeft--;
+        fill.style.width = (timeLeft / 30 * 100) + '%';
+        if (timeLeft <= 0) { clearInterval(timer); handleWrong('超時'); }
+      }, 1000);
+    }
+
+    function answer(idx, el) {
+      clearInterval(timer);
+      const options = document.querySelectorAll('.option');
+      options.forEach(o => o.classList.add('disabled'));
+
+      if (idx === currentShuffled.correct) {
+        el.classList.add('correct');
+        sndCorrect();
+        const base = basePoints(currentLevel);
+        const timeBonus = timeBonusOf(timeLeft, currentLevel);
+        const gained = base + timeBonus;
+        score += gained;
+        levelPoints += gained;
+        levelScore += 100 / QUESTIONS_PER_LEVEL;  // 答對率累計，滿分 100
+        document.getElementById('scoreValue').textContent = score;
+        const lvScoreEl = document.getElementById('levelScoreValue');
+        if (lvScoreEl) lvScoreEl.textContent = levelPoints;
+        setTimeout(nextQuestion, 1200);
+      } else {
+        el.classList.add('wrong');
+        options[currentShuffled.correct].classList.add('correct');
+        sndWrong();
+        const q = levelQuestions[currentQuestion];
+        wrongAnswers.push({
+          q: q.q,
+          correct: currentShuffled.options[currentShuffled.correct],
+          yours: currentShuffled.options[idx],
+          level: levels[currentLevel].name
+        });
+        setTimeout(() => handleWrong('答錯'), 1200);
+      }
+    }
+
+    function handleWrong(reason) {
+      lives--;
+      document.getElementById('livesValue').textContent = lives;
+      if (lives <= 0) { endGame(false); }
+      else { nextQuestion(); }
+    }
+
+    function tryPromoteOrEnd() {
+      const passed = levelPassedThisRound();
+      persistAttempt(currentLevel, levelPoints, passed);
+      if (passed) {
+        if (currentLevel < levels.length - 1) {
+          const nextIdx = currentLevel + 1;
+          if (unlockLevel(nextIdx)) newlyUnlockedNames.push(levels[nextIdx].name);
+          currentLevel = nextIdx; sndLevel(); loadLevel(currentLevel);
+        } else {
+          endGame(true);
+        }
+      } else {
+        endGame(false);
+      }
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      if (currentQuestion >= levelQuestions.length) {
+        tryPromoteOrEnd();
+      } else {
+        showQuestion();
+      }
+    }
+
+    /* ============ 錦囊（有限制） ============ */
+    function renderLifelines() {
+      const box = document.getElementById('lifelinesBox');
+      box.innerHTML = '';
+      const btns = [
+        { key: 'fifty', label: '🧩 50/50' },
+        { key: 'hint', label: '💡 提示' },
+        { key: 'skip', label: '⏭️ 跳過' }
+      ];
+      btns.forEach(b => {
+        const remain = LIFELINE_LIMITS[b.key] - lifelineUsedCount[b.key];
+        const btn = document.createElement('button');
+        const disabled = remain <= 0;
+        btn.className = 'lifeline' + (disabled ? ' used' : '');
+        btn.disabled = disabled;
+        btn.innerHTML = `${b.label} <span class="cnt">×${remain}</span>`;
+        btn.addEventListener('click', () => useLifeline(b.key));
+        box.appendChild(btn);
+      });
+    }
+
+    function useLifeline(key) {
+      if (lifelineUsedCount[key] >= LIFELINE_LIMITS[key]) return;
+      lifelineUsedCount[key]++;
+      sndClick();
+      renderLifelines();
+      const q = levelQuestions[currentQuestion];
+      const options = document.querySelectorAll('.option');
+
+      if (key === 'hint') {
+        document.getElementById('hintBox').textContent = '💡 提示：' + (q.hint || q.options[q.a]);
+        document.getElementById('hintBox').classList.remove('hidden');
+      } else if (key === 'fifty') {
+        let removed = 0;
+        options.forEach((opt, idx) => {
+          if (idx !== currentShuffled.correct && removed < 2) {
+            opt.style.visibility = 'hidden';
+            opt.classList.add('disabled');
+            removed++;
+          }
+        });
+      } else if (key === 'skip') {
+        clearInterval(timer);
+        currentQuestion++;
+        if (currentQuestion >= levelQuestions.length) {
+          tryPromoteOrEnd();
+        } else {
+          showQuestion();
+        }
+      }
+    }
+
+    /* ============ 結算 + 排行榜 ============ */
+    function endGame(cleared) {
+      clearInterval(timer);
+      if (!cleared) persistAttempt(currentLevel, levelPoints, false);
+      if (cleared) { sndWin(); } else { sndLose(); }
+      gameScreen.classList.add('hidden');
+      resultScreen.classList.remove('hidden');
+
+      const finalScoreEl = document.getElementById('finalScore');
+      const resultTitle = document.getElementById('resultTitle');
+      const resultRank = document.getElementById('resultRank');
+      const trophyEmoji = document.getElementById('trophyEmoji');
+      const unlockMsgEl = document.getElementById('unlockMsg');
+
+      finalScoreEl.textContent = score + ' 分';
+
+      const tIdx = (cleared && currentLevel === levels.length - 1) ? levels.length - 1 : titleIndexFromScore(score);
+      const t = LEVEL_TITLES[tIdx];
+      const rank = t.emoji + ' ' + t.title + ' · ' + t.honor;
+      if (cleared && currentLevel === levels.length - 1) {
+        resultTitle.textContent = '恭喜通關！';
+      } else if (tIdx >= 5) {
+        resultTitle.textContent = '表現卓越';
+      } else if (tIdx >= 3) {
+        resultTitle.textContent = '表現優秀';
+      } else if (tIdx >= 1) {
+        resultTitle.textContent = '繼續努力';
+      } else {
+        resultTitle.textContent = '再試一次';
+      }
+      trophyEmoji.textContent = t.emoji;
+      resultRank.textContent = rank + '（門檻 ≥' + SCORE_NEED[tIdx] + ' 分）';
+
+      unlockMsgEl.classList.remove('fail');
+      if (newlyUnlockedNames.length > 0) {
+        const extra = currentUser ? '（登入後可隨時玩下一級或任何已解鎖嘅更高級別）' : '（遊客模式，返回首頁後進度唔會保存）';
+        unlockMsgEl.textContent = '🔓 新解鎖難度：' + newlyUnlockedNames.join('、') + extra;
+        unlockMsgEl.classList.remove('hidden');
+      } else if (!cleared) {
+        const acc = Math.round(levelScore);
+        const need = scoreNeed(currentLevel);
+        unlockMsgEl.classList.add('fail');
+        unlockMsgEl.textContent = `未達標：答對率 ${acc}%（需 ≥${UNLOCK_NEED}%）｜本關 ${levelPoints} 分（需 ≥${need}）。兩項都達到先可以玩更高級。`;
+        unlockMsgEl.classList.remove('hidden');
+      } else {
+        unlockMsgEl.classList.add('hidden');
+      }
+
+      // 排行榜：登入玩家自動記入；遊客可補填呢稱後記錄
+      const nameEntry = document.getElementById('nameEntry');
+      const saveBtn = document.getElementById('saveScoreBtn');
+      const nameInput = document.getElementById('nameInput');
+      const saveHint = document.getElementById('saveScoreHint');
+      nameEntry.classList.remove('hidden');
+      nameInput.value = currentUser || nameInput.value || '';
+      saveBtn.disabled = false;
+      saveBtn.textContent = '記錄成績';
+      if (saveHint) saveHint.textContent = '';
+
+      const commitScore = (nm) => {
+        addScore(nm, score, boardLevelLabel());
+        refreshBoards();
+        saveBtn.disabled = true;
+        saveBtn.textContent = '已更新排行榜 ✓';
+        if (saveHint) saveHint.textContent = '✓ 「' + (nm || '匿名') + '」嘅最高分已寫入排行榜（同名只保留最高分）。';
+      };
+
+      if (currentUser) {
+        commitScore(currentUser);
+        nameInput.readOnly = true;
+      } else {
+        nameInput.readOnly = false;
+        if (saveHint) saveHint.textContent = '遊客請填呢稱再按「記錄成績」，否則唔會上榜。';
+      }
+
+      saveBtn.onclick = () => {
+        const nm = (nameInput.value || '').trim();
+        if (!nm && !currentUser) {
+          alert('請先填寫呢稱再記入排行榜。');
+          return;
+        }
+        commitScore(nm || currentUser);
+      };
+      nameInput.onkeydown = (e) => {
+        if (e.key === 'Enter') saveBtn.click();
+      };
+
+      // 錯題複習
+      const reviewList = document.getElementById('reviewList');
+      if (wrongAnswers.length > 0) {
+        reviewList.classList.remove('hidden');
+        reviewList.innerHTML = '<h3>錯題複習</h3>' + wrongAnswers.map(w => `
+          <div class="review-item">
+            <div class="q">[${w.level}] ${w.q}</div>
+            <div class="yours">你選：${w.yours || '—'}</div>
+            <div class="a">正確：${w.correct}</div>
+          </div>
+        `).join('');
+      } else {
+        reviewList.classList.remove('hidden');
+        reviewList.innerHTML = '<h3>🎉 全對！無錯題複習。</h3>';
+      }
+
+      refreshBoards();
+    }
+
+    // 初始渲染開始頁排行榜
+    refreshBoards();
+  </script>
+</body>
+</html>
