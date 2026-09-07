@@ -147,6 +147,7 @@
     .board-clear { background: none; border: none; color: #b45309; font-size: .8rem; cursor: pointer; text-decoration: underline; float: right; }
     .title-legend { font-size: .78rem; color: #92400e; line-height: 1.7; margin: 0 0 10px; }
     .board td.title-cell { font-weight: 700; color: #b45309; }
+    .lb-status { font-size: .8rem; color: #92400e; margin: 0 0 8px; }
 
     /* Game Screen */
     .game-header {
@@ -432,7 +433,8 @@
 
       <div class="board" id="startBoard">
         <button class="board-clear" id="clearBoardBtn">清空記錄</button>
-        <h3>🏅 排行榜（本地保存）</h3>
+        <h3>🏅 共用排行榜</h3>
+        <div class="lb-status" id="startLbStatus">正在同步其他人嘅成績…</div>
         <div class="title-legend" id="startTitleLegend"></div>
         <div id="startBoardBody"></div>
       </div>
@@ -475,7 +477,8 @@
       </div>
 
       <div class="board" id="resultBoard">
-        <h3>🏅 排行榜（本地保存）</h3>
+        <h3>🏅 共用排行榜</h3>
+        <div class="lb-status" id="resultLbStatus"></div>
         <div class="title-legend" id="resultTitleLegend"></div>
         <div id="resultBoardBody"></div>
       </div>
@@ -1235,40 +1238,111 @@
     const startBtn = document.getElementById('startBtn');
     const restartBtn = document.getElementById('restartBtn');
 
-    /* ============ 排行榜（localStorage） ============ */
+    /* ============ 排行榜（本機 + 線上共用） ============ */
     const LB_KEY = 'wenxue_millionaire_lb';
+    const NTFY_TOPIC = 'wenxue-zhuangyuan-lb-2026';
+    const NTFY_URL = 'https://ntfy.sh/' + NTFY_TOPIC;
+    const LB_JSON_URLS = [
+      'https://raw.githubusercontent.com/cheungwp18-droid/wenxue-zhuangyuan/main/leaderboard.json',
+      'https://cheungwp18-droid.github.io/wenxue-zhuangyuan/leaderboard.json',
+      'https://gist.githubusercontent.com/cheungwp18-droid/87ada01e0af261ac89c5f730d9e773ac/raw/leaderboard.json'
+    ];
+    let cachedBoard = [];
+
     function loadBoard() {
       try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; }
       catch (e) { return []; }
     }
     function saveBoard(board) {
+      cachedBoard = board;
       try { localStorage.setItem(LB_KEY, JSON.stringify(board)); } catch (e) {}
+    }
+    function sanitizeEntry(r) {
+      if (!r) return null;
+      const name = String(r.name || '').trim().slice(0, 12);
+      const score = Number(r.score);
+      if (name.length < 1 || !Number.isFinite(score) || score < 0 || score > 1e8) return null;
+      return {
+        name,
+        score: Math.round(score),
+        level: String(r.level || '—').slice(0, 20),
+        date: String(r.date || '').slice(0, 32)
+      };
+    }
+    function mergeBoards(lists) {
+      const map = new Map();
+      lists.flat().forEach(raw => {
+        const r = sanitizeEntry(raw);
+        if (!r) return;
+        const prev = map.get(r.name);
+        if (!prev || r.score > prev.score) map.set(r.name, r);
+      });
+      return Array.from(map.values()).sort((a, b) => b.score - a.score).slice(0, 30);
+    }
+    async function fetchJsonList(url) {
+      const res = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error('http ' + res.status);
+      const data = await res.json();
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray(data.list)) return data.list;
+      return [];
+    }
+    async function fetchNtfyList() {
+      const res = await fetch(NTFY_URL + '/json?poll=1&since=all', { cache: 'no-store' });
+      if (!res.ok) throw new Error('ntfy ' + res.status);
+      const text = await res.text();
+      const out = [];
+      text.split('\n').forEach(line => {
+        if (!line.trim()) return;
+        try {
+          const ev = JSON.parse(line);
+          if (ev.event !== 'message' || !ev.message) return;
+          const m = typeof ev.message === 'string' ? JSON.parse(ev.message) : ev.message;
+          out.push(m);
+        } catch (e) {}
+      });
+      return out;
+    }
+    async function pullRemoteBoard() {
+      const lists = [loadBoard()];
+      let remoteOk = false;
+      try {
+        lists.push(await fetchNtfyList());
+        remoteOk = true;
+      } catch (e) {}
+      for (const url of LB_JSON_URLS) {
+        try {
+          lists.push(await fetchJsonList(url));
+          remoteOk = true;
+          break;
+        } catch (e) {}
+      }
+      const merged = mergeBoards(lists);
+      saveBoard(merged);
+      return { board: merged, remoteOk };
+    }
+    async function pushRemoteScore(entry) {
+      const body = JSON.stringify(sanitizeEntry(entry));
+      await fetch(NTFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body
+      });
     }
     function addScore(name, sc, lvName) {
       name = (name || '').trim() || '匿名';
       const today = new Date().toLocaleDateString('zh-Hant');
-      const board = loadBoard();
-      const i = board.findIndex(r => r.name === name);
-      if (i >= 0) {
-        const old = board[i];
-        const better = sc > (old.score || 0);
-        board[i] = {
-          name,
-          score: better ? sc : old.score,
-          level: lvName || old.level,
-          date: today
-        };
-      } else {
-        board.push({ name, score: sc, level: lvName, date: today });
-      }
-      board.sort((a, b) => b.score - a.score);
-      const top = board.slice(0, 20);
-      try {
-        localStorage.setItem(LB_KEY, JSON.stringify(top));
-      } catch (e) {
-        alert('排行榜儲存失敗（可能瀏覽器限制咗本地儲存）。請用同一個檔案開啟，或唔好用無痕模式。');
-      }
-      return top;
+      const entry = sanitizeEntry({ name, score: sc, level: lvName, date: today });
+      const board = mergeBoards([loadBoard(), [entry]]);
+      saveBoard(board);
+      pushRemoteScore(entry).then(() => refreshBoards()).catch(() => refreshBoards());
+      return board;
+    }
+    function setLbStatus(text) {
+      ['startLbStatus', 'resultLbStatus'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+      });
     }
     function refreshBoards() {
       const legend = titleLegendHtml();
@@ -1276,10 +1350,18 @@
       const rl = document.getElementById('resultTitleLegend');
       if (sl) sl.textContent = legend;
       if (rl) rl.textContent = legend;
+      const board = cachedBoard.length ? cachedBoard : loadBoard();
       const a = document.getElementById('startBoardBody');
       const b = document.getElementById('resultBoardBody');
-      if (a) renderBoardBody(a);
-      if (b) renderBoardBody(b);
+      if (a) renderBoardBody(a, board);
+      if (b) renderBoardBody(b, board);
+      pullRemoteBoard().then(({ board: remote, remoteOk }) => {
+        if (a) renderBoardBody(a, remote);
+        if (b) renderBoardBody(b, remote);
+        setLbStatus(remoteOk ? '共用榜已同步，其他人打完都會出現喺呢度。' : '未能連線共用榜，而家只顯示本機成績。');
+      }).catch(() => {
+        setLbStatus('未能連線共用榜，而家只顯示本機成績。');
+      });
     }
     function boardLevelLabel() {
       if (currentUser) {
@@ -1289,9 +1371,9 @@
       }
       return levels[currentLevel].name;
     }
-    function renderBoardBody(el) {
+    function renderBoardBody(el, board) {
       if (!el) return;
-      const board = loadBoard();
+      if (!board) board = cachedBoard.length ? cachedBoard : loadBoard();
       if (board.length === 0) {
         el.innerHTML = '<div class="empty">仲未有人上榜，快啲做第一個！🏆</div>';
         return;
@@ -1655,7 +1737,7 @@
         refreshBoards();
         saveBtn.disabled = true;
         saveBtn.textContent = '已更新排行榜 ✓';
-        if (saveHint) saveHint.textContent = '✓ 「' + (nm || '匿名') + '」嘅最高分已寫入排行榜（同名只保留最高分）。';
+        if (saveHint) saveHint.textContent = '✓ 「' + (nm || '匿名') + '」已記入共用榜（同名只保留最高分，其他人重新整理即可見到）。';
       };
 
       if (currentUser) {
